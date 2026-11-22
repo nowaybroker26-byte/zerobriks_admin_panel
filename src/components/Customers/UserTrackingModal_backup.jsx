@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useState, useEffect } from "react";
 import {
   X,
@@ -51,7 +52,7 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
     const userId = selectedUser._id || selectedUser.id;
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL || ""}/api/get_user_tracking_details`,
+        `${EP.API_GET_USER_TRACKING_DETAILS}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -274,7 +275,7 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
     setUpdatingStatus(true);
     try {
       await fetch(
-        `${process.env.REACT_APP_API_BASE_URL || ""}/api/update_user_status`,
+        `${EP.API_UPDATE_USER_STATUS}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -388,7 +389,7 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
                     src={
                       u.profile_image.startsWith("http")
                         ? u.profile_image
-                        : `${process.env.REACT_APP_API_BASE_URL || ""}/${u.profile_image}`
+                        : `${API_BASE_URL || ""}/${u.profile_image}`
                     }
                     alt={u.full_name || "User"}
                     className="w-16 h-16 rounded-full object-cover border-2 border-[#D4AF37] shadow-md"
@@ -1045,7 +1046,7 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
                                   src={
                                     prop.cover_image.startsWith("http")
                                       ? prop.cover_image
-                                      : `${process.env.REACT_APP_API_BASE_URL || ""}/${prop.cover_image}`
+                                      : `${API_BASE_URL || ""}/${prop.cover_image}`
                                   }
                                   alt={prop.property_name}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -1138,7 +1139,7 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
                                   src={
                                     proj.cover_image.startsWith("http")
                                       ? proj.cover_image
-                                      : `${process.env.REACT_APP_API_BASE_URL || ""}/${proj.cover_image}`
+                                      : `${API_BASE_URL || ""}/${proj.cover_image}`
                                   }
                                   alt={proj.project_name}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

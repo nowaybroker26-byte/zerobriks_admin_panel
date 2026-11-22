@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useLocation } from "react-router-dom";
@@ -41,7 +42,7 @@ const TimeSlot = () => {
 
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_timeslot`,
+        `${EP.CUST_API_GET_TIMESLOT}`,
         { user_id: userId }
       );
 
@@ -85,7 +86,7 @@ const TimeSlot = () => {
     setAddingSlot(true);
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/add_timeslot`,
+        `${EP.CUST_API_ADD_TIMESLOT}`,
         {
           user_id: userId,
           timeslot,
@@ -118,7 +119,7 @@ const TimeSlot = () => {
 
     try {
       const response = await axios.delete(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/delete_timeslot`,
+        `${EP.CUST_API_DELETE_TIMESLOT}`,
         {
           data: { timeslot_id: deleteConfirmationId },
         }

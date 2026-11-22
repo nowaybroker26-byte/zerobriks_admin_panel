@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -69,7 +70,7 @@ const CategoryUsersList = () => {
     try {
       setErrors("");
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/get_users`,
+        `${EP.API_GET_USERS}`,
         {
           user_type: user,
         },

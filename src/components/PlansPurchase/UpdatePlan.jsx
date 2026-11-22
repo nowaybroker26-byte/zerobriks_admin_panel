@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -44,7 +45,7 @@ const UpdatePlan = () => {
       try {
         setLoading(true);
         const res = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/get_plan_details`,
+          `${EP.API_GET_PLAN_DETAILS}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -116,7 +117,7 @@ const UpdatePlan = () => {
             if (p.plan_image) {
               const fullImg = p.plan_image.startsWith("http")
                 ? p.plan_image
-                : `${process.env.REACT_APP_API_BASE_URL}${p.plan_image}`;
+                : `${API_BASE_URL}${p.plan_image}`;
               setImagePreview(fullImg);
             }
           }
@@ -229,7 +230,7 @@ const UpdatePlan = () => {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/update_plan`,
+        `${EP.API_UPDATE_PLAN}`,
         {
           method: "POST",
           body: formData,

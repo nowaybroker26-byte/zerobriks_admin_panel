@@ -1,3 +1,4 @@
+import { EP } from '../Api/endpoints';
 import React, { useState } from "react";
 import axios from "axios";
 import Loader from "react-loader-spinner";
@@ -49,7 +50,7 @@ const ListingForm = (props) => {
         setLoading(true);
         axios
             .post(
-                `${process.env.REACT_APP_API_URL}/api/listings/search`,
+                `${EP.API_LISTINGS_SEARCH}`,
                 {
                     sale_type,
                     price,

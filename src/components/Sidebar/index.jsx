@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -579,7 +580,7 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
     const fetchAllUsers = async () => {
       try {
         const res = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL || "http://localhost:8000"}/api/get_users`,
+          `${EP.API_GET_USERS}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -723,9 +724,9 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
   const handleLogout = async () => {
     const token = sessionStorage.getItem("token");
     try {
-      if (token && process.env.REACT_APP_API_BASE_URL) {
+      if (token && API_BASE_URL) {
         await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/api/logout/`,
+          `${EP.API_LOGOUT}`,
           {},
           {
             headers: {
@@ -949,7 +950,7 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
             <div className="hidden sm:block text-left leading-tight">
               <div className="text-xs font-bold text-gray-900">Admin</div>
               <div className="text-[10px] text-gray-500 font-medium">
-                {currentRole?.name || "Super Admin"}
+                {currentRole?.roleName || "No role"}
               </div>
             </div>
             <ChevronDown size={13} className="text-gray-400 hidden sm:block" />

@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useState, useEffect, useRef, useContext } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -111,7 +112,7 @@ const Projects = () => {
     const headers = isRealToken ? { Authorization: `Token ${token}` } : {};
 
     axios
-      .get(`${process.env.REACT_APP_API_BASE_URL}/api/cities/`, { headers })
+      .get(`${EP.API_CITIES}`, { headers })
       .then((res) => {
         const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
         const names = list.map((c) => c.city_name || c.name).filter(Boolean);
@@ -218,7 +219,7 @@ const Projects = () => {
 
   const transformProjectItem = (item) => {
     const id = item._id || item.id || item.project_id;
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
+    const baseUrl = API_BASE_URL || "";
 
     let coverImg = item.cover_image || "";
     if (
@@ -293,7 +294,7 @@ const Projects = () => {
       formData.append("page", page.toString());
       formData.append("page_size", customPageSize.toString());
 
-      let endpoint = `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_project_list_admin`;
+      let endpoint = `${EP.CUST_API_GET_PROJECT_LIST_ADMIN}`;
       if (!useGetListing) {
         if (searchKeyword) formData.append("search_keyword", searchKeyword);
         if (city) formData.append("city_name", city);
@@ -313,7 +314,7 @@ const Projects = () => {
           formData.append("furnish_type", furnishType.join("|"));
         if (bhkType.length > 0) formData.append("bhk_type", bhkType.join("|"));
         if (sortBy) formData.append("sort_by", sortBy);
-        endpoint = `${process.env.REACT_APP_API_BASE_URL}/cust_api/my_project_search_filter_admin`;
+        endpoint = `${EP.CUST_API_MY_PROJECT_SEARCH_FILTER_ADMIN}`;
       }
 
       let rawList = [];
@@ -346,7 +347,7 @@ const Projects = () => {
       if (rawList.length === 0 && useGetListing) {
         try {
           const res2 = await axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_project_list`,
+            `${EP?.CUST_API_GET_PROJECT_LIST || `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_project_list`}`,
             { page: page.toString(), page_size: customPageSize.toString() },
             { headers }
           );
@@ -370,7 +371,7 @@ const Projects = () => {
       if (rawList.length === 0 && useGetListing) {
         try {
           const res3 = await axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}/cust_api/all_project_list`,
+            `${EP?.CUST_API_ALL_PROJECT_LIST || `${process.env.REACT_APP_API_BASE_URL}/cust_api/all_project_list`}`,
             { page: page.toString(), page_size: customPageSize.toString() },
             { headers }
           );
@@ -390,11 +391,28 @@ const Projects = () => {
         }
       }
 
-      // 4. Fallback for search/filter if my_project_search_filter_admin returned empty
+      // 4. Fallback to recently_posted_project (GET)
+      if (rawList.length === 0 && useGetListing && page === 1) {
+        try {
+          const res4 = await axios.get(
+            `${EP?.API_RECENTLY_POSTED_PROJECT || `${process.env.REACT_APP_API_BASE_URL}/api/recently_posted_project`}`
+          );
+          const extracted = extractDataAndPagination(res4?.data, page);
+          if (extracted.list && extracted.list.length > 0) {
+            rawList = extracted.list;
+            totalPagesCount = extracted.totalPages;
+            currentPageNum = extracted.currentPage;
+          }
+        } catch (err4) {
+          console.warn("recently_posted_project fallback failed:", err4?.message);
+        }
+      }
+
+      // 5. Fallback for search/filter if my_project_search_filter_admin returned empty
       if (rawList.length === 0 && !useGetListing) {
         try {
           const resFilter = await axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}/cust_api/my_project_search_filter`,
+            `${EP.CUST_API_MY_PROJECT_SEARCH_FILTER}`,
             formData,
             { headers }
           );
@@ -592,7 +610,7 @@ const Projects = () => {
     try {
       const token = sessionStorage.getItem("token");
       const response = await axios.delete(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/delete_project`,
+        `${EP.CUST_API_DELETE_PROJECT}`,
         {
           data: { project_id: projectId },
           headers: { Authorization: `Token ${token}` },

@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect } from "react";
 import {
   Sliders,
@@ -50,7 +51,7 @@ const HeroSliderManager = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL || ""}/api/get_hero_sliders_admin`
+        `${EP.API_GET_HERO_SLIDERS_ADMIN}`
       );
       const result = await response.json();
       if (result.status === 1 && Array.isArray(result.data)) {
@@ -119,7 +120,7 @@ const HeroSliderManager = () => {
     const newStatus = slider.status === "Active" ? "Inactive" : "Active";
     try {
       const res = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL || ""}/api/update_hero_slider`,
+        `${EP.API_UPDATE_HERO_SLIDER}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -155,7 +156,7 @@ const HeroSliderManager = () => {
     if (confirm.isConfirmed) {
       try {
         const res = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL || ""}/api/delete_hero_slider`,
+          `${EP.API_DELETE_HERO_SLIDER}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -201,8 +202,8 @@ const HeroSliderManager = () => {
 
     try {
       const endpoint = editingSlider
-        ? `${process.env.REACT_APP_API_BASE_URL || ""}/api/update_hero_slider`
-        : `${process.env.REACT_APP_API_BASE_URL || ""}/api/add_hero_slider`;
+        ? `${EP.API_UPDATE_HERO_SLIDER}`
+        : `${EP.API_ADD_HERO_SLIDER}`;
 
       const res = await fetch(endpoint, {
         method: "POST",

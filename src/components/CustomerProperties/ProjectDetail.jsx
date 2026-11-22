@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo } from "react";
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import axios from "axios";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -143,7 +144,7 @@ const ProjectDetail = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_project_details`,
+        `${EP?.CUST_API_GET_PROJECT_DETAILS || `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_project_details`}`,
         { project_id: projId, user_id: userId },
         { headers: { "Content-Type": "application/json" } }
       );
@@ -186,7 +187,7 @@ const ProjectDetail = () => {
     try {
       setActionLoading(true);
       const res = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/update_project_status`,
+        `${EP?.API_UPDATE_PROJECT_STATUS || `${process.env.REACT_APP_API_BASE_URL}/api/update_project_status`}`,
         {
           project_id: projectDetails._id,
           admin_approval: newStatus,
@@ -1054,6 +1055,8 @@ const ProjectDetail = () => {
                           <span className="font-semibold text-gray-800 text-right">
                             {itemVal}
                           </span>
+                        </div>
+                      ))}
                         </div>
                       ))}
                     </div>

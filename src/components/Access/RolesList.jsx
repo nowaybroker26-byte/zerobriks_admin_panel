@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useContext, useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -28,7 +29,7 @@ const RolesList = () => {
     setLoading(true);
     const token = sessionStorage.getItem("token");
     axios
-      .get(`${process.env.REACT_APP_API_BASE_URL}/roles/list`, {
+      .get(`${EP.ROLES_LIST}`, {
         headers: { Authorization: `Token ${token}` },
       })
       .then((res) => {
@@ -62,7 +63,7 @@ const RolesList = () => {
     try {
       const token = sessionStorage.getItem("token");
       await axios.delete(
-        `${process.env.REACT_APP_API_BASE_URL}/roles/delete/${role.roleId}`,
+        `${EP.ROLES_DELETE}${role.roleId}`,
         { headers: { Authorization: `Token ${token}` } }
       );
       setRoles((prev) => prev.filter((r) => r.roleId !== role.roleId));

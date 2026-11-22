@@ -1,3 +1,4 @@
+import { API_BASE_URL } from './Api/endpoints';
 import axios from 'axios';
 
 // Create an Axios instance
@@ -7,7 +8,7 @@ const instance = axios.create({
   // baseURL: 'https://api.truloapp.com/',
   
   // Local Base URL:
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000',
+  baseURL: API_BASE_URL,
   timeout: 5000, // Timeout after 5 seconds
   headers: {
     'Content-Type': 'application/json', // Default content type

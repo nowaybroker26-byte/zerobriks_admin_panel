@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useContext } from "react";
+import { EP } from '../../Api/endpoints';
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
@@ -77,7 +78,7 @@ const Dashboard = () => {
           start_date: dashboardDateRange?.startDate || null,
           end_date: dashboardDateRange?.endDate || null,
         };
-        const res = await axios.post(`${baseUrl}/api/get_dashboard`, payload);
+        const res = await axios.post(EP?.API_GET_DASHBOARD || `${baseUrl}/api/get_dashboard`, payload);
 
         if (res.data?.data) {
           setDashboardData(res.data.data);
@@ -226,8 +227,8 @@ const Dashboard = () => {
       {
         label: "Owners",
         data: regTrend.datasets?.owners || [],
-        borderColor: "#881337",
-        backgroundColor: "#881337",
+        borderColor: "#7A0E2E",
+        backgroundColor: "#7A0E2E",
         borderWidth: 2,
         tension: 0.35,
         pointRadius: 3,
@@ -332,7 +333,7 @@ const Dashboard = () => {
     datasets: [
       {
         data: revenueOverview.amounts,
-        backgroundColor: "#780018",
+        backgroundColor: "#68091D",
         borderRadius: 4,
         barThickness: 24,
         hoverBackgroundColor: "#9C3A4A",
@@ -408,7 +409,7 @@ const Dashboard = () => {
       count: kpi.total_users.count,
       growth: kpi.total_users.growth,
       icon: Users,
-      iconBg: "bg-rose-50 text-[#881337]",
+      iconBg: "bg-rose-50 text-[#7A0E2E]",
     },
     {
       label: "Property Owners",
@@ -452,7 +453,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="w-full bg-[#F4F6F9] min-h-[calc(100vh-4rem)] text-[#1E293B] pb-8 font-sans">
+    <div className="w-full overflow-x-hidden bg-[#F4F6F9] min-h-[calc(100vh-4rem)] text-[#1E293B] pb-8 font-sans">
       <div className="max-w-[1600px] mx-auto px-3 sm:px-5 pt-3">
         {/* Compact, Clean & Professional Dashboard Header Card */}
         <div className="bg-white rounded-xl border border-gray-200/80 shadow-xs px-3.5 py-2.5 mb-3">
@@ -479,7 +480,7 @@ const Dashboard = () => {
             </div>
 
             {/* Right: Date Range Indicator, Refresh & Export Report */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2.5 flex-shrink-0">
               {/* Active Period Pill */}
               <div
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border shadow-xs transition-colors ${hasActiveFilter
@@ -555,7 +556,7 @@ const Dashboard = () => {
                   <IconComp size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-semibold text-gray-600 truncate leading-tight">
+                  <div className="text-[11px] font-semibold text-gray-600 leading-tight">
                     {card.label}
                   </div>
                   <div className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight leading-tight my-0.5">
@@ -599,7 +600,7 @@ const Dashboard = () => {
               {/* Custom Legend */}
               <div className="flex flex-wrap items-center gap-3 mb-2 text-[10px] font-semibold text-gray-600">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#881337]" /> Owners
+                  <span className="w-2 h-2 rounded-full bg-[#7A0E2E]" /> Owners
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-[#D97706]" /> Buyer / Tenant
@@ -630,7 +631,7 @@ const Dashboard = () => {
               {/* Legend */}
               <div className="flex flex-wrap items-center gap-3 mb-2.5 text-[10px] font-semibold text-gray-600">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#881337]" /> Owners
+                  <span className="w-2 h-2 rounded-full bg-[#7A0E2E]" /> Owners
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-[#D97706]" /> Buyer / Tenant
@@ -666,7 +667,7 @@ const Dashboard = () => {
                         <div
                           style={{
                             width: `${(c.owners / t) * 100}%`,
-                            backgroundColor: "#881337",
+                            backgroundColor: "#7A0E2E",
                           }}
                         />
                         <div
@@ -893,12 +894,12 @@ const Dashboard = () => {
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                     placeholder="Search ID (ZB-CU-2B379E), Name..."
-                    className="w-full pl-7 pr-2.5 py-1 bg-gray-50 border border-gray-200 rounded-lg text-[11px] text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#780018]"
+                    className="w-full pl-7 pr-2.5 py-1 bg-gray-50 border border-gray-200 rounded-lg text-[11px] text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#68091D]"
                   />
                 </div>
                 <button
                   onClick={() => navigate("/customers")}
-                  className="text-xs font-bold text-[#881337] hover:text-[#780018] flex items-center gap-0.5 whitespace-nowrap"
+                  className="text-xs font-bold text-[#7A0E2E] hover:text-[#68091D] flex items-center gap-0.5 whitespace-nowrap"
                 >
                   <span>View All</span>
                   <ChevronRight size={13} />
@@ -984,7 +985,7 @@ const Dashboard = () => {
                         }}
                         className="hover:bg-amber-50/50 transition-colors cursor-pointer group"
                       >
-                        <td className="py-2.5 px-2 font-mono font-bold text-gray-800 group-hover:text-[#780018]">
+                        <td className="py-2.5 px-2 font-mono font-bold text-gray-800 group-hover:text-[#68091D]">
                           {u.user_id}
                         </td>
                         <td className="py-2.5 px-2 font-bold text-gray-900">
@@ -1046,7 +1047,7 @@ const Dashboard = () => {
                 </h2>
                 <button
                   onClick={() => navigate("/recent-properties")}
-                  className="text-xs font-bold text-[#881337] hover:text-[#780018] flex items-center gap-0.5"
+                  className="text-xs font-bold text-[#7A0E2E] hover:text-[#68091D] flex items-center gap-0.5"
                 >
                   <span>View All</span>
                   <ChevronRight size={13} />
@@ -1167,7 +1168,7 @@ const Dashboard = () => {
                   1
                 );
                 const pct = Math.max((item.properties / maxProps) * 100, 12);
-                const barColor = idx === 0 ? "#881337" : "#D49B35";
+                const barColor = idx === 0 ? "#7A0E2E" : "#D49B35";
 
                 return (
                   <div key={idx} className="flex items-center gap-2.5 text-xs">

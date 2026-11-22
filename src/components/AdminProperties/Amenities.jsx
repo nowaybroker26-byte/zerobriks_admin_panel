@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
@@ -32,7 +33,7 @@ const Amenities = () => {
     setErrors("");
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_amenities`
+        `${EP.CUST_API_GET_AMENITIES}`
       );
       if (response.data && response.data.data) {
         setAmenities(response.data.data);
@@ -58,7 +59,7 @@ const Amenities = () => {
       setSuccessMessage("");
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/remove_property_amenity`,
+        `${EP.CUST_API_REMOVE_PROPERTY_AMENITY}`,
         {
           method: "DELETE",
           headers: {
@@ -228,7 +229,7 @@ const Amenities = () => {
               const iconUrl = amenity.amenity_icon
                 ? amenity.amenity_icon.startsWith("http")
                   ? amenity.amenity_icon
-                  : `${process.env.REACT_APP_API_BASE_URL}${amenity.amenity_icon}`
+                  : `${API_BASE_URL}${amenity.amenity_icon}`
                 : null;
 
               return (

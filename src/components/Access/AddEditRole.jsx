@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation, Link } from "react-router-dom";
 import axios from "axios";
@@ -61,8 +62,8 @@ const AddEditRole = () => {
 
     try {
       const url = editingRole
-        ? `${process.env.REACT_APP_API_BASE_URL}/roles/update/${roleId}`
-        : `${process.env.REACT_APP_API_BASE_URL}/roles/create`;
+        ? `${EP.ROLES_UPDATE}${roleId}`
+        : `${EP.ROLES_CREATE}`;
 
       const method = editingRole ? axios.put : axios.post;
       const token = sessionStorage.getItem("token");

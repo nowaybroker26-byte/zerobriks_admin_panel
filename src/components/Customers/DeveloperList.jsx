@@ -1,43 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faUser,
-  faEnvelope,
-  faPhone,
-  faEye,
-  faIdBadge,
-  faSearch,
-  faCity,
-  faBuilding,
-  faCheckCircle,
-  faCalendarAlt,
-  faTimes,
-  faUndo,
-  faFilter,
-} from "@fortawesome/free-solid-svg-icons";
-import UserTrackingModal from "./UserTrackingModal";
-
-const getCustomerId = (item) => {
-  if (item?.customer_id && String(item.customer_id).trim()) {
-    return String(item.customer_id).trim().toUpperCase();
-  }
-  const rawId = String(item?._id || item?.id || "");
-  return `ZB-CU-${rawId.slice(-6).toUpperCase() || "000000"}`;
-};
-
-const formatRegDate = (dateStr) => {
-  if (!dateStr) return "â€”";
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return String(dateStr).slice(0, 10);
-  return d.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
-
+import { EP, API_BASE_URL } from "../../Api/endpoints";`r`nimport React, { useState, useEffect, useMemo } from "react";`r`nimport { useNavigate } from "react-router-dom";`r`nimport axios from "axios";`r`nimport { FontAwesomeIcon } from "@fortawesome/react-fontawesome";`r`nimport {`r`n  faUser,`r`n  faEnvelope,`r`n  faPhone,`r`n  faEye,`r`n  faIdBadge,`r`n  faSearch,`r`n  faCity,`r`n  faBuilding,`r`n  faCheckCircle,`r`n  faCalendarAlt,`r`n  faTimes,`r`n  faUndo,`r`n  faFilter,`r`n} from "@fortawesome/free-solid-svg-icons";`r`nimport UserTrackingModal from "./UserTrackingModal";`r`n`r`nconst getCustomerId = (item) => {`r`n  if (item?.customer_id && String(item.customer_id).trim()) {`r`n    return String(item.customer_id).trim().toUpperCase();`r`n  }`r`n  const rawId = String(item?._id || item?.id || "");`r`n  return ``ZB-CU-${rawId.slice(-6).toUpperCase() || "000000"}``;`r`n};`r`n`r`nconst formatRegDate = (dateStr) => {`r`n  if (!dateStr) return "—";`r`n  const d = new Date(dateStr);`r`n  if (isNaN(d.getTime())) return String(dateStr).slice(0, 10);`r`n  return d.toLocaleDateString("en-IN", {`r`n    day: "2-digit",`r`n    month: "short",`r`n    year: "numeric",`r`n  });`r`n};
 const DeveloperList = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,14 +27,7 @@ const DeveloperList = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      setErrors("");
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/get_users`,
-        {
-          user_type: "Builder",
-        },
-        {
-          headers: {
+      setErrors("");`r`n      const response = await axios.post(`r`n        `${EP?.API_GET_USERS || `${process.env.REACT_APP_API_BASE_URL}/api/get_users`}`,`r`n        {`r`n          user_type: "Builder",`r`n        },`r`n        {`r`n          headers: {
             "Content-Type": "application/json",
           },
         }
@@ -89,6 +43,7 @@ const DeveloperList = () => {
       } else {
         setItems([]);
       }
+
     } catch (error) {
       console.error("Failed to fetch builders/developers:", error);
       setErrors("Failed to fetch builders & developers.");
@@ -759,13 +714,7 @@ const DeveloperList = () => {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="9" className="text-center py-10">
-                    <div
-                      className="spinner-border text-danger"
-                      role="status"
-                      style={{ color: "#7A0E2E", width: "2rem", height: "2rem" }}
+              {loading ? (`r`n                <tr>`r`n                  <td colSpan="9" className="text-center py-10">`r`n                    <div`r`n                      className="spinner-border text-danger"`r`n                      role="status"`r`n                      style={{ color: "#7A0E2E", width: "2rem", height: "2rem" }}
                     >
                       <span className="visually-hidden">Loading builders...</span>
                     </div>

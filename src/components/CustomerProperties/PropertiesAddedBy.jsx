@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import axios from "axios";
@@ -54,7 +55,7 @@ const PropertiesAddedBy = () => {
     setErrors("");
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/get-listing-properties`,
+        `${EP.CUST_API_GET_LISTING_PROPERTIES}`,
         {
           user_id: user_id,
           page: page.toString(),
@@ -184,7 +185,7 @@ const PropertiesAddedBy = () => {
           {properties.map((property) => {
             const getValidImageUrl = (img) => {
               if (typeof img !== "string" || !img.trim()) return null;
-              return img.startsWith("http") ? img : `${process.env.REACT_APP_API_BASE_URL}${img}`;
+              return img.startsWith("http") ? img : `${API_BASE_URL}${img}`;
             };
 
             const coverImage = getValidImageUrl(property.cover_image);
@@ -429,7 +430,7 @@ export default PropertiesAddedBy;
 //     setErrors("");
 //     try {
 //       const response = await axios.post(
-//         `${process.env.REACT_APP_API_BASE_URL}/cust_api/get-listing-properties`,
+//         `${EP.CUST_API_GET_LISTING_PROPERTIES}`,
 //         {
 //           user_id: user_id,
 //           page: page.toString(),
@@ -553,7 +554,7 @@ export default PropertiesAddedBy;
 //           {properties.map((property) => {
 //             const getValidImageUrl = (img) => {
 //               if (typeof img !== "string" || !img.trim()) return null;
-//               return img.startsWith("http") ? img : `${process.env.REACT_APP_API_BASE_URL}${img}`;
+//               return img.startsWith("http") ? img : `${API_BASE_URL}${img}`;
 //             };
 
 //             const coverImage = getValidImageUrl(property.cover_image);

@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useContext } from "react";
 import { EditorState, ContentState, convertFromHTML } from "draft-js";
 import TextEditor from "./TextEditor";
@@ -28,7 +29,7 @@ const FaqForm = () => {
 
   const fetchFaqContent = () => {
     setLoading(true);
-    fetch(`${process.env.REACT_APP_API_BASE_URL}/cust_api/get-faqs`)
+    fetch(`${EP.CUST_API_GET_FAQS}`)
       .then((response) => response.json())
       .then((data) => {
         if (data.status === 1 && data.data?.length > 0) {
@@ -72,7 +73,7 @@ const FaqForm = () => {
       faq_id: faqId,
     };
 
-    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/add_faqs`, {
+    fetch(`${EP.API_ADD_FAQS}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

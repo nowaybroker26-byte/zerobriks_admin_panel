@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios'; 
@@ -16,7 +17,7 @@ const PropertyListCustomers = () => {
 
     useEffect(() => {
         // Fetch properties from API
-        axios.get('/geo/list/')
+        axios.get(EP.GEO_LIST)
             .then(response => {
                 setProperties(response.data);
             })

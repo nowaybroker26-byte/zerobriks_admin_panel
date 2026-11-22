@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSave,
@@ -48,7 +49,7 @@ const AddAmenity = () => {
     try {
       setSubmitting(true);
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/add_property_amenities`,
+        `${EP.CUST_API_ADD_PROPERTY_AMENITIES}`,
         {
           method: "POST",
           body: formData,

@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +22,7 @@ import {
   faLayerGroup,
 } from "@fortawesome/free-solid-svg-icons";
 
-const API_URL = `${process.env.REACT_APP_API_BASE_URL}/api/plan_purchase_history`;
+const API_URL = `${EP.API_PLAN_PURCHASE_HISTORY}`;
 
 const PlansPurchaseHistory = () => {
   const [purchaseHistory, setPurchaseHistory] = useState([]);

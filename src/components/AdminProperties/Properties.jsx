@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useState, useEffect, useRef, useContext } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -82,7 +83,7 @@ const Properties = () => {
     const headers = isRealToken ? { Authorization: `Token ${token}` } : {};
 
     axios
-      .get(`${process.env.REACT_APP_API_BASE_URL}/api/cities/`, { headers })
+      .get(`${EP.API_CITIES}`, { headers })
       .then((res) => {
         const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
         const names = list.map((c) => c.city_name || c.name).filter(Boolean);
@@ -182,7 +183,7 @@ const Properties = () => {
 
   const transformPropertyItem = (item) => {
     const id = item._id || item.id || item.property_id;
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
+    const baseUrl = API_BASE_URL || "";
 
     let coverImg = item.cover_image || "";
     if (
@@ -265,7 +266,7 @@ const Properties = () => {
       formData.append("page", page.toString());
       formData.append("page_size", customPageSize.toString());
 
-      let endpoint = `${process.env.REACT_APP_API_BASE_URL}/cust_api/get-listing-properties-admin`;
+      let endpoint = `${EP.CUST_API_GET_LISTING_PROPERTIES_ADMIN}`;
       if (!useGetListing) {
         if (searchKeyword) formData.append("search_keyword", searchKeyword);
         if (category) formData.append("property_category_type", category);
@@ -281,7 +282,7 @@ const Properties = () => {
           formData.append("furnish_type", furnishType.join("|"));
         if (bhkType.length > 0) formData.append("bhk_type", bhkType.join("|"));
         if (sortBy) formData.append("sort_by", sortBy);
-        endpoint = `${process.env.REACT_APP_API_BASE_URL}/cust_api/my_properties_search_filter_admin`;
+        endpoint = `${EP.CUST_API_MY_PROPERTIES_SEARCH_FILTER_ADMIN}`;
       }
 
       let rawList = [];
@@ -310,7 +311,7 @@ const Properties = () => {
       if (rawList.length === 0 && useGetListing) {
         try {
           const res2 = await axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_property_list`,
+            `${EP?.CUST_API_GET_PROPERTY_LIST || `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_property_list`}`,
             { page: page.toString(), page_size: customPageSize.toString() },
             { headers }
           );
@@ -330,7 +331,7 @@ const Properties = () => {
       if (rawList.length === 0 && useGetListing) {
         try {
           const res3 = await axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}/cust_api/get-listing-properties`,
+            `${EP?.CUST_API_GET_LISTING_PROPERTIES || `${process.env.REACT_APP_API_BASE_URL}/cust_api/get-listing-properties`}`,
             { page: page.toString(), page_size: customPageSize.toString() },
             { headers }
           );
@@ -346,11 +347,31 @@ const Properties = () => {
         }
       }
 
-      // 4. Fallback for search/filter if my_properties_search_filter_admin returned empty
+      // 4. Fallback to recently_posted_properties (GET)
+      if (rawList.length === 0 && useGetListing && page === 1) {
+        try {
+          const res4 = await axios.get(
+            `${EP?.API_RECENTLY_POSTED_PROPERTIES || `${process.env.REACT_APP_API_BASE_URL}/api/recently_posted_properties`}`
+          );
+          const extracted = extractDataAndPagination(res4?.data, page);
+          if (extracted.list && extracted.list.length > 0) {
+            rawList = extracted.list;
+            totalPagesCount = extracted.totalPages;
+            currentPageNum = extracted.currentPage;
+          }
+        } catch (err4) {
+          console.warn(
+            "recently_posted_properties fallback failed:",
+            err4?.message
+          );
+        }
+      }
+
+      // 5. Fallback for search/filter if my_properties_search_filter_admin returned empty
       if (rawList.length === 0 && !useGetListing) {
         try {
           const resFilter = await axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}/cust_api/my_properties_search_filter`,
+            `${EP?.CUST_API_PROPERTY_SEARCH_FILTER || `${process.env.REACT_APP_API_BASE_URL}/cust_api/my_properties_search_filter`}`,
             formData,
             { headers }
           );
@@ -525,7 +546,7 @@ const Properties = () => {
     try {
       const token = sessionStorage.getItem("token");
       const response = await axios.delete(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/delete_listing_property`,
+        `${EP.CUST_API_DELETE_LISTING_PROPERTY}`,
         {
           data: { property_id: propertyId },
           headers: { Authorization: `Token ${token}` },

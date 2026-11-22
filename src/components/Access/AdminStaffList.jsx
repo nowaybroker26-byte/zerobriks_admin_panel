@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useContext, useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -28,7 +29,7 @@ const AdminStaffList = () => {
     try {
       const token = sessionStorage.getItem("token");
       const response = await axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}/admin-staff/list`,
+        `${EP.ADMIN_STAFF_LIST}`,
         { headers: { Authorization: `Token ${token}` } }
       );
       setAdminStaff(response.data.map(normalizeStaff));
@@ -56,7 +57,7 @@ const AdminStaffList = () => {
     try {
       const token = sessionStorage.getItem("token");
       await axios.delete(
-        `${process.env.REACT_APP_API_BASE_URL}/admin-staff/delete/${staff.staffId}`,
+        `${EP.ADMIN_STAFF_DELETE}${staff.staffId}`,
         { headers: { Authorization: `Token ${token}` } }
       );
       setAdminStaff((prev) => prev.filter((s) => s.staffId !== staff.staffId));

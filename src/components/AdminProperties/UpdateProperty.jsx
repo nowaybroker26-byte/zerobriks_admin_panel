@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { IoIosInformationCircle } from "react-icons/io";
@@ -201,7 +202,7 @@ const generateDescription = async () => {
     setIsGeneratingDescription(true);
 
     const response = await axios.post(
-      `${process.env.REACT_APP_API_URL}/cust_api/generate-property-description/`,
+      `${EP.CUST_API_GENERATE_PROPERTY_DESCRIPTION}`,
       {
         form_type: "property",
         prompt: buildPrompt(),
@@ -241,7 +242,7 @@ useEffect(() => {
   const fetchPropertyDetails = async () => {
     try {
       const res = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_property_details`,
+        `${EP.CUST_API_GET_PROPERTY_DETAILS}`,
         { property_id: id },
       );
 
@@ -521,7 +522,7 @@ useEffect(() => {
     const fetchAmenities = async () => {
       try {
         const response = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_amenities`,
+          `${EP.CUST_API_GET_AMENITIES}`,
         );
 
         if (response.data.status === 1) {
@@ -627,7 +628,7 @@ useEffect(() => {
     if (image.old) {
       try {
         await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/cust_api/delete_property_image`,
+          `${EP.CUST_API_DELETE_PROPERTY_IMAGE}`,
           {
             property_image_id: image._id,
           },
@@ -1116,7 +1117,7 @@ useEffect(() => {
 
       /* ---------------- Update Property API ---------------- */
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/edit_property`,
+        `${EP.CUST_API_EDIT_PROPERTY}`,
         form,
         {
           headers: {
@@ -1135,7 +1136,7 @@ useEffect(() => {
         imageForm.append("property_image", fileData2[i]);
 
         await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/cust_api/add_property_images`,
+          `${EP.CUST_API_ADD_PROPERTY_IMAGES}`,
           imageForm,
           {
             headers: {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo } from "react";
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import axios from "axios";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -137,7 +138,7 @@ const PropertyDetail = () => {
 
       axios
         .post(
-          `${process.env.REACT_APP_API_BASE_URL}/cust_api/add_view_property`,
+          `${EP?.CUST_API_ADD_VIEW_PROPERTY || `${process.env.REACT_APP_API_BASE_URL}/cust_api/add_view_property`}`,
           formData
         )
         .catch(() => {});
@@ -149,7 +150,7 @@ const PropertyDetail = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_property_details`,
+        `${EP?.CUST_API_GET_PROPERTY_DETAILS || `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_property_details`}`,
         { property_id: propId, user_id: userId }
       );
 
@@ -164,6 +165,8 @@ const PropertyDetail = () => {
       }
     } catch (err) {
       console.error("Error fetching property details:", err);
+      setPropertyImages([]);
+      setAllAmenities([]);
     } finally {
       setLoading(false);
     }
@@ -182,7 +185,7 @@ const PropertyDetail = () => {
     try {
       setActionLoading(true);
       const res = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/update_property_status`,
+        `${EP?.API_UPDATE_PROPERTY_STATUS || `${process.env.REACT_APP_API_BASE_URL}/api/update_property_status`}`,
         {
           property_id: propertyDetails._id,
           admin_approval: newStatus,
@@ -972,6 +975,7 @@ const PropertyDetail = () => {
                     </button>
                   </div>
                 )}
+
               </div>
             )}
 

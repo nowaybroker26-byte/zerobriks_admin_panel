@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -32,7 +33,7 @@ const FeedbackList = () => {
     setError("");
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}/api/get_feedbacks`
+        `${EP.API_GET_FEEDBACKS}`
       );
       if (response.data && response.data.status === 1 && Array.isArray(response.data.data)) {
         setFeedbacks(response.data.data);

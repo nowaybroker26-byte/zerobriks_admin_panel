@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { EP } from '../../Api/endpoints';
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -52,7 +53,7 @@ const Profile = () => {
     setError(null);
     try {
       const res = await axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}/api/profile/`,
+        `${EP?.API_PROFILE || `${process.env.REACT_APP_API_BASE_URL}/api/profile/`}`,
         {
           headers: {
             Authorization: `Token ${token}`,
@@ -102,7 +103,7 @@ const Profile = () => {
 
     try {
       const res = await axios.put(
-        `${process.env.REACT_APP_API_BASE_URL}/api/profile/`,
+        `${EP?.API_PROFILE || `${process.env.REACT_APP_API_BASE_URL}/api/profile/`}`,
         profile,
         {
           headers: {

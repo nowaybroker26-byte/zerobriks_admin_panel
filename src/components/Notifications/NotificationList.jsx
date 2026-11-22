@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -38,7 +39,7 @@ const NotificationList = () => {
     setError("");
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}/api/get_notifications`
+        `${EP.API_GET_NOTIFICATIONS}`
       );
       if (response.data && response.data.data) {
         setNotifications(response.data.data);
@@ -116,11 +117,11 @@ const NotificationList = () => {
       let res;
       try {
         res = await axios.delete(
-          `${process.env.REACT_APP_API_BASE_URL}/api/delete_all_notifications`
+          `${EP.API_DELETE_ALL_NOTIFICATIONS}`
         );
       } catch (delErr) {
         res = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/api/delete_all_notifications`
+          `${EP.API_DELETE_ALL_NOTIFICATIONS}`
         );
       }
 
@@ -170,12 +171,12 @@ const NotificationList = () => {
       let res;
       try {
         res = await axios.delete(
-          `${process.env.REACT_APP_API_BASE_URL}/api/delete_notification`,
+          `${EP.API_DELETE_NOTIFICATION}`,
           { data: { notification_id: notificationId } }
         );
       } catch (delErr) {
         res = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/api/delete_notification`,
+          `${EP.API_DELETE_NOTIFICATION}`,
           { notification_id: notificationId }
         );
       }

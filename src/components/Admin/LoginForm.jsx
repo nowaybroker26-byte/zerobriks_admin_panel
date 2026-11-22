@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +36,7 @@ const LoginForm = () => {
 
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/login/`,
+        `${EP.API_LOGIN}`,
         { username: userVal, password: passVal }
       );
 
