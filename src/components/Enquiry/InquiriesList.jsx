@@ -117,7 +117,8 @@ const InquiriesList = () => {
       let data = [];
       try {
         const response = await axios.post(
-          `${EP?.CUST_API_GET_PROPERTY_ENQUIRY || `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_property_enquiry`}`,`r`n          { page: "1", page_size: "200" }
+          `${EP?.CUST_API_GET_PROPERTY_ENQUIRY || `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_property_enquiry`}`,
+          { page: "1", page_size: "200" }
         );
         if (response.data && Array.isArray(response.data.data)) {
           data = response.data.data;

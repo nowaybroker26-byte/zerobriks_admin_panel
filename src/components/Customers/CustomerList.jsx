@@ -1340,7 +1340,12 @@ const CustomerList = () => {
                   className="py-3 px-3.5 text-left text-xs font-bold text-white tracking-wide align-middle"
                   style={{ backgroundColor: "#7A0E2E", minWidth: "120px" }}
                 >
-                  Signed Up`r`n                </th>`r`n                <th`r`n                  className="py-3 px-3.5 text-left text-xs font-bold text-white tracking-wide align-middle"`r`n                  style={{ backgroundColor: "#7A0E2E", minWidth: "120px" }}`r`n                >
+                  Signed Up
+                </th>
+                <th
+                  className="py-3 px-3.5 text-left text-xs font-bold text-white tracking-wide align-middle"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "120px" }}
+                >
                   Status
                 </th>
                 <th
@@ -1361,7 +1366,17 @@ const CustomerList = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12">`r`n                    <div`r`n                      className="spinner-border text-danger"`r`n                      role="status"`r`n                      style={{ color: "#7A0E2E", width: "2.2rem", height: "2.2rem" }}`r`n                    >`r`n                      <span className="visually-hidden">Loading users...</span>`r`n                    </div>`r`n                    <p className="text-muted mt-2.5 text-xs font-semibold mb-0">`r`n                      Loading user directory...`r`n                    </p>
+                  <td colSpan={8} className="text-center py-12">
+                    <div
+                      className="spinner-border text-danger"
+                      role="status"
+                      style={{ color: "#7A0E2E", width: "2.2rem", height: "2.2rem" }}
+                    >
+                      <span className="visually-hidden">Loading users...</span>
+                    </div>
+                    <p className="text-muted mt-2.5 text-xs font-semibold mb-0">
+                      Loading user directory...
+                    </p>
                   </td>
                 </tr>
               ) : filteredCustomers.length === 0 ? (
@@ -1470,7 +1485,9 @@ const CustomerList = () => {
                       </td>
 
                       {/* User Type */}
-                      <td className="py-3 px-3">`r`n                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">`r`n                          {userTypeGroup(customer.user_type)}
+                      <td className="py-3 px-3">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                          {userTypeGroup(customer.user_type)}
                         </span>
                       </td>
 
