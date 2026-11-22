@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -160,7 +161,7 @@ const AddPlan = () => {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/add_plan`,
+        `${EP.API_ADD_PLAN}`,
         {
           method: "POST",
           body: formData,

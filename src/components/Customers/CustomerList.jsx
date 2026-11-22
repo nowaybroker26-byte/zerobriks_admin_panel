@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useEffect, useState, useContext, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -21,6 +22,58 @@ import {
 import Swal from "sweetalert2";
 import { MyContext } from "../../App";
 import UserTrackingModal from "./UserTrackingModal";
+
+// Groups shown in the admin. Agent and Cp have no exact group yet: they are
+// grouped with Buyer / Tenant here; change this table if they belong elsewhere.
+const USER_TYPE_GROUPS = {
+  Builder: "Builder / Developer",
+  Owner: "Owner",
+  Agent: "Buyer / Tenant",
+  Cp: "Buyer / Tenant",
+  Buyer: "Buyer / Tenant",
+  Tenant: "Buyer / Tenant",
+};
+
+const userTypeGroup = (value) => (value ? USER_TYPE_GROUPS[value] || value : "Not set");
+
+// API timestamps (created_at) are stored in UTC without a zone suffix.
+const parseApiDate = (value) => {
+  if (!value) return null;
+  const text = String(value);
+  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/i.test(text);
+  const date = new Date(hasZone ? text : `${text}Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatSignupDate = (value) => {
+  const date = parseApiDate(value);
+  if (!date) return { main: "Not recorded", sub: "" };
+  const main = new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  }).format(date);
+  const time = new Intl.DateTimeFormat("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Kolkata",
+  }).format(date);
+  return { main, sub: `${time} IST` };
+};
+
+const timeAgo = (value) => {
+  const date = parseApiDate(value);
+  if (!date) return "";
+  const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hr ago`;
+  const days = Math.floor(seconds / 86400);
+  if (days < 30) return days === 1 ? "1 day ago" : `${days} days ago`;
+  const months = Math.floor(days / 30);
+  return months === 1 ? "1 month ago" : `${months} months ago`;
+};
 
 const getCustomerId = (customer) => {
   if (customer?.customer_id && String(customer.customer_id).trim()) {
@@ -91,7 +144,7 @@ const CustomerList = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/get_users`,
+        `${EP.API_GET_USERS}`,
         {
           method: "POST",
           headers: {
@@ -189,7 +242,7 @@ const CustomerList = () => {
         setErrors("");
 
         await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/update_user_status`,
+          `${EP.API_UPDATE_USER_STATUS}`,
           {
             method: "POST",
             headers: {
@@ -235,7 +288,7 @@ const CustomerList = () => {
     if (confirm.isConfirmed) {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/cust_api/restore_user`,
+          `${EP.CUST_API_RESTORE_USER}`,
           {
             method: "POST",
             headers: {
@@ -519,6 +572,12 @@ const CustomerList = () => {
                   className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
                   style={{ backgroundColor: "#7A0E2E" }}
                 >
+                  Signed Up
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E" }}
+                >
                   <FontAwesomeIcon
                     icon={faFlag}
                     className="mr-1.5 text-amber-300"
@@ -538,7 +597,7 @@ const CustomerList = () => {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center py-8 text-xs text-gray-500 font-semibold"
                   >
                     Loading users from database...
@@ -547,7 +606,7 @@ const CustomerList = () => {
               ) : paginatedCustomers.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center py-8 text-xs text-gray-500 font-semibold"
                   >
                     No users found matching{" "}
@@ -559,6 +618,8 @@ const CustomerList = () => {
                   const isVerified = customer.status === "Verified";
                   const cid = getCustomerId(customer);
                   const rowNum = (currentPage - 1) * pageSize + index + 1;
+                  const signup = formatSignupDate(customer.created_at);
+                  const signedAgo = timeAgo(customer.created_at);
 
                   return (
                     <tr
@@ -607,7 +668,7 @@ const CustomerList = () => {
                                 src={
                                   customer.profile_image.startsWith("http")
                                     ? customer.profile_image
-                                    : `${process.env.REACT_APP_API_BASE_URL}/${customer.profile_image}`
+                                    : `${API_BASE_URL}/${customer.profile_image}`
                                 }
                                 alt=""
                                 className="absolute inset-0 w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm"
@@ -649,15 +710,23 @@ const CustomerList = () => {
                             icon={faCity}
                             className="text-[#7A0E2E] text-[10px]"
                           />
-                          {customer.city || "Pune"}
+                          {customer.city || "Not set"}
                         </div>
                       </td>
 
                       {/* User Type */}
                       <td className="py-3.5 px-3">
                         <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-                          {customer.user_type || "Owner"}
+                          {userTypeGroup(customer.user_type)}
                         </span>
+                      </td>
+
+                      {/* Sign-up date */}
+                      <td className="py-3.5 px-3 text-xs whitespace-nowrap">
+                        <div className="font-semibold text-gray-800">{signup.main}</div>
+                        <div className="text-[11px] text-gray-500">
+                          {[signup.sub, signedAgo].filter(Boolean).join(" · ")}
+                        </div>
                       </td>
 
                       {/* Status */}
@@ -680,7 +749,7 @@ const CustomerList = () => {
                                 : "bg-amber-500"
                             }`}
                           ></span>
-                          {customer.status || "Verified"}
+                          {customer.status || "Not set"}
                         </span>
                       </td>
 

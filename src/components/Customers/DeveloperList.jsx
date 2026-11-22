@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useEffect, useState } from "react";
 import $ from "jquery";
 import "datatables.net-bs5";
@@ -32,7 +33,13 @@ const DeveloperList = () => {
 
   const fetchCustomers = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/top_developers`);
+      const response = await fetch(`${EP.API_TOP_DEVELOPERS}`);
+      if (response.status === 204) {
+        setCustomers([]);
+        setApprovedCount(0);
+        setErrors("");
+        return;
+      }
       if (!response.ok) throw new Error("Failed to fetch data.");
 
       const result = await response.json();
@@ -54,7 +61,7 @@ const DeveloperList = () => {
       try {
         setSuccess("");
         setErrors("");
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/update_developer_status`, {
+        const response = await fetch(`${EP.API_UPDATE_DEVELOPER_STATUS}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -77,7 +84,7 @@ const DeveloperList = () => {
     try {
       setSuccess("");
       setErrors("");
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/update_developer_status`, {
+      const response = await fetch(`${EP.API_UPDATE_DEVELOPER_STATUS}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -131,7 +138,7 @@ const DeveloperList = () => {
                     <td>{index + 1}</td>
                     <td className="justify-content-center align-items-center">
                       <img
-                        src={`${process.env.REACT_APP_API_BASE_URL}${customer.brand_img}`}
+                        src={`${API_BASE_URL}${customer.brand_img}`}
                         alt={customer.developer_name}
                         className="object-cover w-16 h-16 mr-4 rounded-full"
                       />

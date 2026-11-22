@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useRef } from "react";
 import { IoIosInformationCircle } from "react-icons/io";
 import { Plus } from "lucide-react"; // Using Lucide Icons for delete button
@@ -201,7 +202,7 @@ const generateDescription = async () => {
     setIsGeneratingDescription(true);
 
     const response = await axios.post(
-      `${process.env.REACT_APP_API_URL}/cust_api/generate-property-description/`,
+      `${EP.CUST_API_GENERATE_PROPERTY_DESCRIPTION}`,
       {
         form_type: "project",
         prompt: buildPrompt(),
@@ -336,7 +337,7 @@ const generateDescription = async () => {
         const fetchAmenities = async () => {
             try {
                 const response = await axios.post(
-                    `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_amenities`
+                    `${EP.CUST_API_GET_AMENITIES}`
                 );
                 if (response.data.status === 1) {
                     setAmenitiesList(response.data.data);
@@ -392,7 +393,7 @@ const generateDescription = async () => {
                 const form = new FormData();
                 form.append("project_image_id", imageToDelete._id);
 
-                const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/cust_api/remove_project_image`, {
+                const res = await fetch(`${EP.CUST_API_REMOVE_PROJECT_IMAGE}`, {
                     method: "DELETE",
                     body: form,
                 });
@@ -605,7 +606,7 @@ const generateDescription = async () => {
         const fetchProjectDetails = async () => {
             try {
                 const res = await axios.post(
-                    `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_project_details`,
+                    `${EP.CUST_API_GET_PROJECT_DETAILS}`,
                     { project_id: id }
                 );
 
@@ -1039,7 +1040,7 @@ setDescription(data.project_description || "");
             }
 
             const res = await axios.post(
-                `${process.env.REACT_APP_API_BASE_URL}/cust_api/edit_project`,
+                `${EP.CUST_API_EDIT_PROJECT}`,
                 form
             );
 
@@ -1060,7 +1061,7 @@ setDescription(data.project_description || "");
 
                     try {
                         const imageRes = await fetch(
-                            `${process.env.REACT_APP_API_BASE_URL}/cust_api/add_project_images`,
+                            `${EP.CUST_API_ADD_PROJECT_IMAGES}`,
                             {
                                 method: "POST",
                                 body: imageFormData,

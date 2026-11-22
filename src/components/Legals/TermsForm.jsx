@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useContext } from "react";
 import { EditorState, ContentState, convertFromHTML } from "draft-js";
 import TextEditor from "./TextEditor";
@@ -28,7 +29,7 @@ const TermsForm = () => {
 
   const fetchTermsContent = () => {
     setLoading(true);
-    fetch(`${process.env.REACT_APP_API_BASE_URL}/cust_api/get-term-conditions`)
+    fetch(`${EP.CUST_API_GET_TERM_CONDITIONS}`)
       .then((response) => response.json())
       .then((data) => {
         if (data.status === 1 && data.data?.length > 0) {
@@ -72,7 +73,7 @@ const TermsForm = () => {
       term_id: termsId,
     };
 
-    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/add_term_condition`, {
+    fetch(`${EP.API_ADD_TERM_CONDITION}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

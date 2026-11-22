@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +18,7 @@ const ChangePasswordForm = () => {
     try {
       const token = sessionStorage.getItem("token");
       const response = await axios.put(
-        `${process.env.REACT_APP_API_BASE_URL}/api/change-password/`,
+        `${EP.API_CHANGE_PASSWORD}`,
         { old_password: oldPassword, new_password: newPassword },
         { headers: { Authorization: `Token ${token}` } }
       );

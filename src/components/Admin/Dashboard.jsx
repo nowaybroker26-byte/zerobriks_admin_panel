@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -67,8 +68,7 @@ const Dashboard = () => {
       if (isManual) setRefreshing(true);
 
       try {
-        const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
-        const res = await axios.post(`${baseUrl}/api/get_dashboard`, {
+        const res = await axios.post(`${EP.API_GET_DASHBOARD}`, {
           filter_period: periodFilter,
         });
 
@@ -200,8 +200,8 @@ const Dashboard = () => {
       {
         label: "Owners",
         data: regTrend.datasets?.owners || [],
-        borderColor: "#881337",
-        backgroundColor: "#881337",
+        borderColor: "#7A0E2E",
+        backgroundColor: "#7A0E2E",
         borderWidth: 2,
         tension: 0.35,
         pointRadius: 3,
@@ -324,7 +324,7 @@ const Dashboard = () => {
     datasets: [
       {
         data: revenueOverview.amounts,
-        backgroundColor: "#780018",
+        backgroundColor: "#68091D",
         borderRadius: 4,
         barThickness: 24,
         hoverBackgroundColor: "#9C3A4A",
@@ -400,7 +400,7 @@ const Dashboard = () => {
       count: kpi.total_users.count,
       growth: kpi.total_users.growth,
       icon: Users,
-      iconBg: "bg-rose-50 text-[#881337]",
+      iconBg: "bg-rose-50 text-[#7A0E2E]",
     },
     {
       label: "Property Owners",
@@ -458,13 +458,13 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="w-full bg-[#F4F6F9] min-h-[calc(100vh-4rem)] text-[#1E293B] pb-8 font-sans">
+    <div className="w-full overflow-x-hidden bg-[#F4F6F9] min-h-[calc(100vh-4rem)] text-[#1E293B] pb-8 font-sans">
       <div className="max-w-[1600px] mx-auto px-3 sm:px-5 pt-3">
         {/* Top Action Row: Refresh status on left, Export Report Gold Button on right */}
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2 text-xs text-gray-500">
             {refreshing && (
-              <span className="inline-flex items-center gap-1.5 text-[#780018] font-semibold">
+              <span className="inline-flex items-center gap-1.5 text-[#68091D] font-semibold">
                 <RefreshCw size={13} className="animate-spin" />
                 Updating live data...
               </span>
@@ -474,7 +474,7 @@ const Dashboard = () => {
             onClick={handleExportReport}
             className="flex items-center gap-1.5 px-3.5 py-1.5 text-white text-xs font-bold rounded-lg shadow-sm transition-all active:scale-95"
             style={{
-              background: "linear-gradient(90deg, #D49B35 0%, #B87D1B 100%)",
+              background: "linear-gradient(90deg, #D4AF37 0%, #A57F38 100%)",
             }}
           >
             <Download size={13} />
@@ -485,7 +485,7 @@ const Dashboard = () => {
         {/* =========================================================================
             ROW 1: 7 KPI STATS CARDS (Exact Screenshot Layout)
         ========================================================================= */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 2xl:grid-cols-7 gap-3 mb-3.5">
           {kpiCards.map((card, i) => {
             const IconComp = card.icon;
             return (
@@ -499,7 +499,7 @@ const Dashboard = () => {
                   <IconComp size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-semibold text-gray-600 truncate leading-tight">
+                  <div className="text-[11px] font-semibold text-gray-600 leading-tight">
                     {card.label}
                   </div>
                   <div className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight leading-tight my-0.5">
@@ -543,7 +543,7 @@ const Dashboard = () => {
               {/* Custom Legend */}
               <div className="flex flex-wrap items-center gap-3 mb-2 text-[10px] font-semibold text-gray-600">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#881337]" /> Owners
+                  <span className="w-2 h-2 rounded-full bg-[#7A0E2E]" /> Owners
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-[#D97706]" /> Buyers
@@ -580,7 +580,7 @@ const Dashboard = () => {
               {/* Legend */}
               <div className="flex flex-wrap items-center gap-3 mb-2.5 text-[10px] font-semibold text-gray-600">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#881337]" /> Owners
+                  <span className="w-2 h-2 rounded-full bg-[#7A0E2E]" /> Owners
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-[#D97706]" /> Buyers
@@ -619,7 +619,7 @@ const Dashboard = () => {
                         <div
                           style={{
                             width: `${(c.owners / t) * 100}%`,
-                            backgroundColor: "#881337",
+                            backgroundColor: "#7A0E2E",
                           }}
                         />
                         <div
@@ -852,12 +852,12 @@ const Dashboard = () => {
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                     placeholder="Search ID (ZB-CU-2B379E), Name..."
-                    className="w-full pl-7 pr-2.5 py-1 bg-gray-50 border border-gray-200 rounded-lg text-[11px] text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#780018]"
+                    className="w-full pl-7 pr-2.5 py-1 bg-gray-50 border border-gray-200 rounded-lg text-[11px] text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#68091D]"
                   />
                 </div>
                 <button
                   onClick={() => navigate("/customers")}
-                  className="text-xs font-bold text-[#881337] hover:text-[#780018] flex items-center gap-0.5 whitespace-nowrap"
+                  className="text-xs font-bold text-[#7A0E2E] hover:text-[#68091D] flex items-center gap-0.5 whitespace-nowrap"
                 >
                   <span>View All</span>
                   <ChevronRight size={13} />
@@ -898,7 +898,7 @@ const Dashboard = () => {
                   onClick={() => setUserTab(tab.id)}
                   className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all whitespace-nowrap border ${
                     userTab === tab.id
-                      ? "bg-[#780018] text-white border-[#780018] shadow-sm"
+                      ? "bg-[#68091D] text-white border-[#68091D] shadow-sm"
                       : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                   }`}
                 >
@@ -955,7 +955,7 @@ const Dashboard = () => {
                         }}
                         className="hover:bg-amber-50/50 transition-colors cursor-pointer group"
                       >
-                        <td className="py-2.5 px-2 font-mono font-bold text-gray-800 group-hover:text-[#780018]">
+                        <td className="py-2.5 px-2 font-mono font-bold text-gray-800 group-hover:text-[#68091D]">
                           {u.user_id}
                         </td>
                         <td className="py-2.5 px-2 font-bold text-gray-900">
@@ -1017,7 +1017,7 @@ const Dashboard = () => {
                 </h2>
                 <button
                   onClick={() => navigate("/recent-properties")}
-                  className="text-xs font-bold text-[#881337] hover:text-[#780018] flex items-center gap-0.5"
+                  className="text-xs font-bold text-[#7A0E2E] hover:text-[#68091D] flex items-center gap-0.5"
                 >
                   <span>View All</span>
                   <ChevronRight size={13} />
@@ -1146,7 +1146,7 @@ const Dashboard = () => {
                   1
                 );
                 const pct = Math.max((item.properties / maxProps) * 100, 12);
-                const barColor = idx === 0 ? "#881337" : "#D49B35";
+                const barColor = idx === 0 ? "#7A0E2E" : "#D49B35";
 
                 return (
                   <div key={idx} className="flex items-center gap-2.5 text-xs">

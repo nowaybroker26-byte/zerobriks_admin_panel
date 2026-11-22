@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -29,7 +30,7 @@ const DynamicPricing = () => {
   // Fetch existing Dynamic Pricing Keys
   const fetchPricingKeys = () => {
     setLoading(true);
-    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/get_dynamic_pricing_keys`)
+    fetch(`${EP.API_GET_DYNAMIC_PRICING_KEYS}`)
       .then((response) => response.json())
       .then((data) => {
         if (data.status === 1 && data.data?.length > 0) {
@@ -63,7 +64,7 @@ const DynamicPricing = () => {
     };
 
     fetch(
-      `${process.env.REACT_APP_API_BASE_URL}/api/add_dynamic_pricing_keys`,
+      `${EP.API_ADD_DYNAMIC_PRICING_KEYS}`,
       {
         method: "POST",
         headers: {

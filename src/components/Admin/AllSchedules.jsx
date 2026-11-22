@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -50,7 +51,7 @@ const AllSchedules = () => {
     setError("");
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_virtual_tour_schedule`,
+        `${EP.CUST_API_GET_VIRTUAL_TOUR_SCHEDULE}`,
         { page: page.toString(), page_size: pageSize.toString() }
       );
 

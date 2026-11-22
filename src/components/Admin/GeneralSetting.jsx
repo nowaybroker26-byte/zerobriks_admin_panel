@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, {
   useState,
   useEffect,
@@ -78,7 +79,7 @@ const GeneralSetting = () => {
     const fetchSettings = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_setting`
+          `${EP.CUST_API_GET_SETTING}`
         );
         if (response.data.status === 1 && response.data.data?.length > 0) {
           const setting = response.data.data[0];
@@ -149,7 +150,7 @@ const GeneralSetting = () => {
       });
 
       await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/add_setting`,
+        `${EP.CUST_API_ADD_SETTING}`,
         formDataToSubmit,
         {
           headers: {

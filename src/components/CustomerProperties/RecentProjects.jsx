@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaRupeeSign, FaEdit, FaTrashAlt } from "react-icons/fa";
@@ -17,7 +18,7 @@ const RecentProjects = () => {
   const fetchProjects = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/recently_posted_project`
+        `${EP.API_RECENTLY_POSTED_PROJECT}`
       );
       if (!response.ok) throw new Error("Failed to fetch projects.");
       const result = await response.json();
@@ -49,7 +50,7 @@ const RecentProjects = () => {
   const getValidImageUrl = (img, type = "cover") => {
     const placeholder = type === "cover" ? "https://placehold.co/400x375" : "https://placehold.co/55x55";
     if (!img || !img.trim()) return placeholder;
-    return img.startsWith("http") ? img : `${process.env.REACT_APP_API_BASE_URL}${img}`;
+    return img.startsWith("http") ? img : `${API_BASE_URL}${img}`;
   };
 
   const handleImageClick = (projectId) => {

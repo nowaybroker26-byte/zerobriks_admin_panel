@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useState, useEffect } from "react";
 import {
   X,
@@ -68,8 +69,8 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
       selectedUser.mobile ||
       selectedUser.mobile_number;
     try {
-      const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
-      const response = await fetch(`${baseUrl}/api/get_user_tracking_details`, {
+      const baseUrl = API_BASE_URL || "";
+      const response = await fetch(`${EP.API_GET_USER_TRACKING_DETAILS}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId }),
@@ -106,8 +107,8 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
 
     setUpdatingStatus(true);
     try {
-      const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
-      const res = await fetch(`${baseUrl}/api/update_user_status`, {
+      const baseUrl = API_BASE_URL || "";
+      const res = await fetch(`${EP.API_UPDATE_USER_STATUS}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -264,7 +265,7 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
                     src={
                       u.profile_image.startsWith("http")
                         ? u.profile_image
-                        : `${process.env.REACT_APP_API_BASE_URL || ""}/${u.profile_image}`
+                        : `${API_BASE_URL || ""}/${u.profile_image}`
                     }
                     alt=""
                     className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm"

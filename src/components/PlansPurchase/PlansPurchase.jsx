@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -53,7 +54,7 @@ const PlansPurchase = () => {
       // Primary endpoint
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/get_plans`
+          `${EP.API_GET_PLANS}`
         );
         if (
           response.data &&
@@ -70,7 +71,7 @@ const PlansPurchase = () => {
       if (!plansList || plansList.length === 0) {
         try {
           const resFallback = await axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_subscription_plans`
+            `${EP.CUST_API_GET_SUBSCRIPTION_PLANS}`
           );
           if (
             resFallback.data &&
@@ -109,7 +110,7 @@ const PlansPurchase = () => {
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/delete_plan`,
+        `${EP.API_DELETE_PLAN}`,
         {
           method: "DELETE",
           headers: {

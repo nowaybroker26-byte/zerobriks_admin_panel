@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -28,7 +29,7 @@ const CustomerReviews = () => {
     const fetchFeedbacks = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/get_activities`
+          `${EP.API_GET_ACTIVITIES}`
         );
         if (response.data.status === 1) {
           setReviews(response.data.data); // Set feedbacks data
@@ -98,7 +99,7 @@ const CustomerReviews = () => {
               <div className="flex items-center mb-4">
                 {reviewData.user_profile ? (
                   <img
-                    src={`${process.env.REACT_APP_API_BASE_URL}/media/${reviewData.user_profile}`}
+                    src={`${API_BASE_URL}/media/${reviewData.user_profile}`}
                     alt={reviewData.username || "User"}
                     className="object-cover w-12 h-12 mr-4 rounded-full"
                     onError={(e) => {

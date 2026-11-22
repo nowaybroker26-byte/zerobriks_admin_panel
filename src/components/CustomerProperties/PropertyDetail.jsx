@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import { React, useState, useRef, useEffect } from "react";
 import { FaBed, FaBath, FaRupeeSign } from "react-icons/fa";
 import { MdLocationOn } from "react-icons/md";
@@ -93,7 +94,7 @@ const PropertyDetail = () => {
       formData.append("customer_id", customer_id);
 
       axios
-        .post(`${process.env.REACT_APP_API_BASE_URL}/cust_api/add_view_property`, formData)
+        .post(`${EP.CUST_API_ADD_VIEW_PROPERTY}`, formData)
         .then((res) => {
           if (res.data?.status === 1) {
             console.log("View property recorded");
@@ -112,7 +113,7 @@ const PropertyDetail = () => {
   const fetchPropertyDetails = async (id) => {
     try {
       const res = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_property_details`,
+        `${EP.CUST_API_GET_PROPERTY_DETAILS}`,
         { property_id: id, user_id: userId }
       );
 
@@ -408,7 +409,7 @@ const PropertyDetail = () => {
     try {
       setLoading(true); // Set loading true
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/update_property_status`,
+        `${EP.API_UPDATE_PROPERTY_STATUS}`,
         {
           method: "POST",
           headers: {
@@ -793,7 +794,7 @@ const PropertyDetail = () => {
                   <p key={index} className="flex items-center text-lg">
                     {amenity.icon ? (
                       <img
-                        src={`${process.env.REACT_APP_API_BASE_URL}/media/${amenity.icon}`}
+                        src={`${API_BASE_URL}/media/${amenity.icon}`}
                         alt={amenity.name}
                         className="w-10 h-10 mr-2"
                       />

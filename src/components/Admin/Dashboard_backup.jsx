@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
@@ -159,7 +160,7 @@ const AdminPage = () => {
       formData.append("to_date", toDateVal.toISOString().split("T")[0]);
 
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/get_dashboard`,
+        `${EP.API_GET_DASHBOARD}`,
         formData,
         {
           headers: {
@@ -249,7 +250,7 @@ const AdminPage = () => {
   const fetchProperties = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/recently_posted_properties`
+        `${EP.API_RECENTLY_POSTED_PROPERTIES}`
       );
       if (!response.ok) throw new Error("Failed to fetch properties.");
       const result = await response.json();
@@ -288,7 +289,7 @@ const AdminPage = () => {
   const fetchProjects = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/recently_posted_project`
+        `${EP.API_RECENTLY_POSTED_PROJECT}`
       );
       if (!response.ok) throw new Error("Failed to fetch projects.");
       const result = await response.json();
@@ -324,7 +325,7 @@ const AdminPage = () => {
   const fetchActivities = async () => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}/api/get_activities`
+        `${EP.API_GET_ACTIVITIES}`
       );
       if (response.data?.status === 1 && Array.isArray(response.data?.data)) {
         setActivities(response.data.data);
@@ -431,7 +432,7 @@ const AdminPage = () => {
         : "https://placehold.co/80x80/7A0E2E/FFFFFF?text=Property";
     if (!img || typeof img !== "string" || !img.trim()) return placeholder;
     if (img.startsWith("http")) return img;
-    return `${process.env.REACT_APP_API_BASE_URL}${img}`;
+    return `${API_BASE_URL}${img}`;
   };
 
   // Export Data to CSV

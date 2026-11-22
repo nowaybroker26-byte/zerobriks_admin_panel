@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -121,7 +122,7 @@ const NotificationForm = () => {
     try {
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/send_notification`,
+        `${EP.API_SEND_NOTIFICATION}`,
         {
           method: "POST",
 
@@ -590,7 +591,7 @@ export default NotificationForm;
 
 //     try {
 //       const response = await fetch(
-//         `${process.env.REACT_APP_API_BASE_URL}/api/send_notification`,
+//         `${EP.API_SEND_NOTIFICATION}`,
 //         {
          
 //           method: "POST",

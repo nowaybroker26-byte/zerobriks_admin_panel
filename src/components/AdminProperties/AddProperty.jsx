@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useRef } from "react";
 import { IoIosInformationCircle } from "react-icons/io";
 import { Trash } from "lucide-react"; // Using Lucide Icons for delete button
@@ -200,7 +201,7 @@ const generateDescription = async () => {
     setIsGeneratingDescription(true);
 
     const response = await axios.post(
-      `${process.env.REACT_APP_API_URL}/cust_api/generate-property-description/`,
+      `${EP.CUST_API_GENERATE_PROPERTY_DESCRIPTION}`,
       {
         form_type: "property",
         prompt: buildPrompt(),
@@ -443,7 +444,7 @@ const generateDescription = async () => {
     const fetchAmenities = async () => {
       try {
         const response = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_amenities`,
+          `${EP.CUST_API_GET_AMENITIES}`,
         );
 
         if (response.data.status === 1) {
@@ -686,7 +687,7 @@ const generateDescription = async () => {
     if (value.length === 10) {
       try {
         const response = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_profile_by_number`,
+          `${EP.CUST_API_GET_PROFILE_BY_NUMBER}`,
           { mobile_number: value },
         );
 
@@ -1134,7 +1135,7 @@ const generateDescription = async () => {
 
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/post_property`,
+        `${EP.CUST_API_POST_PROPERTY}`,
         form,
         {
           headers: {
@@ -1152,7 +1153,7 @@ const generateDescription = async () => {
         imageForm.append("property_image", fileData2[i]);
 
         await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/cust_api/add_property_images`,
+          `${EP.CUST_API_ADD_PROPERTY_IMAGES}`,
           {
             method: "POST",
             body: imageForm,

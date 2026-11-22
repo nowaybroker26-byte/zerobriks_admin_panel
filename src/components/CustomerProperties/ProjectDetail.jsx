@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 // import React, { useState, useRef, useEffect } from "react";
 import React, { useState, useRef, useEffect, useContext } from "react";
 import axios from "axios";
@@ -98,7 +99,7 @@ const ProjectDetail = () => {
   const fetchProjectDetails = async () => {
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_project_details`,
+        `${EP.CUST_API_GET_PROJECT_DETAILS}`,
         { project_id: id, user_id: userId },
         { headers: { "Content-Type": "application/json" } }
       );
@@ -264,7 +265,7 @@ const ProjectDetail = () => {
     try {
       setLoading(true); // Set loading true
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/update_project_status`,
+        `${EP.API_UPDATE_PROJECT_STATUS}`,
         {
           method: "POST",
           headers: {
@@ -629,7 +630,7 @@ const ProjectDetail = () => {
                       const isFullUrl = filePath.startsWith("http");
                       const fileUrl = isFullUrl
                         ? filePath
-                        : `${process.env.REACT_APP_API_BASE_URL}/media/${filePath}`;
+                        : `${API_BASE_URL}/media/${filePath}`;
 
                       const link = document.createElement("a");
                       link.href = fileUrl;
@@ -1118,7 +1119,7 @@ const ProjectDetail = () => {
                       <p key={index} className="flex items-center text-lg">
                         {amenity.icon ? (
                           <img
-                            src={`${process.env.REACT_APP_API_BASE_URL}/media/${amenity.icon}`}
+                            src={`${API_BASE_URL}/media/${amenity.icon}`}
                             alt={amenity.name}
                             className="w-10 h-10 mr-2"
                           />

@@ -3,7 +3,7 @@ title React Admin Panel
 cd /d "%~dp0"
 
 echo ====================================================
-echo Starting React Admin Panel on http://localhost:3000
+echo Starting React Admin Panel on http://localhost:3001
 echo Connected to Backend: http://localhost:8000
 echo ====================================================
 
@@ -37,8 +37,9 @@ if not exist "node_modules\.bin\react-scripts.cmd" (
 )
 
 echo Starting development server...
-echo Access in browser: http://localhost:3000/admin
+echo Access in browser: http://localhost:3001/admin
 echo.
 set CI=false
+set PORT=3001
 npm start
 pause

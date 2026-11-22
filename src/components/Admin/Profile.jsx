@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import axios from "axios";
 import React from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'; // Import FontAwesomeIcon
@@ -25,7 +26,7 @@ class Profile extends React.Component {
     }
 
     axios
-      .get(`${process.env.REACT_APP_API_BASE_URL}/api/profile/`, {
+      .get(`${EP.API_PROFILE}`, {
         headers: {
           Authorization: `Token ${token}`,
         },
@@ -64,7 +65,7 @@ class Profile extends React.Component {
 
     axios
       .put(
-        `${process.env.REACT_APP_API_BASE_URL}/api/profile/`,
+        `${EP.API_PROFILE}`,
         this.state.profile,
         {
           headers: {

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../../Api/endpoints';
 import React, { useState, useContext } from "react";
 import { FaEdit, FaTrashAlt, FaMapMarkerAlt, FaCopy } from "react-icons/fa";
 import { BsBuilding } from "react-icons/bs";
@@ -9,7 +10,7 @@ const ProjectCard = ({ project, onDelete }) => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
-  const BASE_URL = process.env.REACT_APP_API_BASE_URL || "";
+  const BASE_URL = API_BASE_URL || "";
 
   const getValidImageUrl = (img) => {
     if (typeof img !== "string" || !img.trim()) return null;

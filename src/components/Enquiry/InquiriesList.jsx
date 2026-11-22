@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
@@ -37,7 +38,7 @@ const InquiriesList = () => {
       let data = [];
       try {
         const response = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_property_enquiry`,
+          `${EP.CUST_API_GET_PROPERTY_ENQUIRY}`,
           { page: "1", page_size: "100" }
         );
         if (response.data && Array.isArray(response.data.data)) {
@@ -51,7 +52,7 @@ const InquiriesList = () => {
       if (!data || data.length === 0) {
         try {
           const fallbackRes = await axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/api/get_property_enquiry`
+            `${EP.API_GET_PROPERTY_ENQUIRY}`
           );
           if (fallbackRes.data && Array.isArray(fallbackRes.data.data)) {
             data = fallbackRes.data.data;

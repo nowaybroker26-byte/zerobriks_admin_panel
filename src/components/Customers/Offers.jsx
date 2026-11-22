@@ -1,3 +1,4 @@
+import { EP, API_BASE_URL } from '../../Api/endpoints';
 import React, {
   useEffect,
   useState,
@@ -59,7 +60,7 @@ const Offers = () => {
     setErrors("");
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/get_offers`
+        `${EP.API_GET_OFFERS}`
       );
 
       if (!response.ok) {
@@ -153,7 +154,7 @@ const Offers = () => {
         setErrors("");
 
         const response = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/update_offer_status`,
+          `${EP.API_UPDATE_OFFER_STATUS}`,
           {
             method: "POST",
             headers: {
@@ -204,7 +205,7 @@ const Offers = () => {
   const getImageUrl = (imgPath) => {
     if (!imgPath) return null;
     if (imgPath.startsWith("http://") || imgPath.startsWith("https://")) return imgPath;
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
+    const baseUrl = API_BASE_URL || "";
     const prefix = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     const path = imgPath.startsWith("/") ? imgPath : `/${imgPath}`;
     return `${prefix}${path}`;

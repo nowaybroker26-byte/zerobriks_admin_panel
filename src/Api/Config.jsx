@@ -1,3 +1,4 @@
+import { API_BASE_URL } from './endpoints';
 import axios from 'axios';
 
 // Live Base URLs:
@@ -6,6 +7,6 @@ import axios from 'axios';
 // axios.defaults.baseURL = 'http://13.127.244.70:4444';
 
 // Local Base URL:
-axios.defaults.baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+axios.defaults.baseURL = API_BASE_URL;
 
 export default axios;

@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -46,7 +47,7 @@ const Description = () => {
 
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_descriptions`,
+        `${EP.CUST_API_GET_DESCRIPTIONS}`,
         { category_type: category }
       );
 
@@ -85,7 +86,7 @@ const Description = () => {
 
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/add_description`,
+        `${EP.CUST_API_ADD_DESCRIPTION}`,
         { category_type: category, description: description }
       );
 
@@ -113,7 +114,7 @@ const Description = () => {
 
     try {
       const response = await axios.delete(
-        `${process.env.REACT_APP_API_BASE_URL}/cust_api/delete_description`,
+        `${EP.CUST_API_DELETE_DESCRIPTION}`,
         {
           data: { description_id: deleteConfirmationId },
         }

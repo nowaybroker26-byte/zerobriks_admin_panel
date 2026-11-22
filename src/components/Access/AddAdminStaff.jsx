@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation, Link } from "react-router-dom";
 import axios from "axios";
@@ -42,7 +43,7 @@ const AddAdminStaff = () => {
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     axios
-      .get(`${process.env.REACT_APP_API_BASE_URL}/api/cities/`, {
+      .get(`${EP.API_CITIES}`, {
         headers: { Authorization: `Token ${token}` },
       })
       .then((res) => {
@@ -98,7 +99,7 @@ const AddAdminStaff = () => {
 
       if (editing) {
         await axios.put(
-          `${process.env.REACT_APP_API_BASE_URL}/admin-staff/update/${staffId}`,
+          `${EP.ADMIN_STAFF_UPDATE}${staffId}`,
           {
             name,
             email,
@@ -110,7 +111,7 @@ const AddAdminStaff = () => {
         );
       } else {
         await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/admin-staff/create`,
+          `${EP.ADMIN_STAFF_CREATE}`,
           {
             name,
             email,

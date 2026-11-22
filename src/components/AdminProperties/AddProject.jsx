@@ -1,3 +1,4 @@
+import { EP } from '../../Api/endpoints';
 import React, { useState, useEffect, useRef } from "react";
 import { IoIosInformationCircle } from "react-icons/io";
 import { Plus } from "lucide-react"; // Using Lucide Icons for delete button
@@ -212,7 +213,7 @@ const generateDescription = async () => {
     setIsGeneratingDescription(true);
 
     const response = await axios.post(
-      `${process.env.REACT_APP_API_URL}/cust_api/generate-property-description/`,
+      `${EP.CUST_API_GENERATE_PROPERTY_DESCRIPTION}`,
       {
         form_type: "project",
         prompt: buildPrompt(),
@@ -372,7 +373,7 @@ const generateDescription = async () => {
         const fetchAmenities = async () => {
             try {
                 const response = await axios.post(
-                    `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_amenities`
+                    `${EP.CUST_API_GET_AMENITIES}`
                 );
                 if (response.data.status === 1) {
                     setAmenitiesList(response.data.data);
@@ -660,7 +661,7 @@ const [formData, setFormData] = useState({
         if (value.length === 10) {
             try {
                 const response = await axios.post(
-                   `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_profile_by_number`,
+                   `${EP.CUST_API_GET_PROFILE_BY_NUMBER}`,
                     { mobile_number: value }
                 );
 
@@ -890,7 +891,7 @@ connect_to_email: email,
         }
 
         try {
-            const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/cust_api/post_project`, {
+            const res = await fetch(`${EP.CUST_API_POST_PROJECT}`, {
                 method: "POST",
                 body: apiFormData,
             });
@@ -911,7 +912,7 @@ connect_to_email: email,
             //         if (unit.image instanceof File) {
             //             unitsapiFormData.append("image", unit.image);
             //         }
-            //         return fetch(`${process.env.REACT_APP_API_BASE_URL}/cust_api/add_project_property`, {
+            //         return fetch(`${EP.CUST_API_ADD_PROJECT_PROPERTY}`, {
             //             method: "POST",
             //             body: unitsFormData,
             //         }).then(res => res.json())
@@ -927,7 +928,7 @@ connect_to_email: email,
                 const apiFormData = new FormData();
                 apiFormData.append("project_id", project_id);
                 apiFormData.append("project_image", file);
-                return fetch(`${process.env.REACT_APP_API_BASE_URL}/cust_api/add_project_images`, {
+                return fetch(`${EP.CUST_API_ADD_PROJECT_IMAGES}`, {
                     method: "POST",
                     body: apiFormData,
                 }).then(res => res.json())
