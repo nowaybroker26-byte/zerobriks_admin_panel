@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
@@ -20,7 +20,6 @@ import {
   User,
   Home,
   Building2,
-  Bed,
   Download,
   ArrowUp,
   MoreHorizontal,
@@ -30,8 +29,12 @@ import {
   ChevronRight,
   RefreshCw,
   Search,
+  Calendar,
+  X,
+  LayoutDashboard,
 } from "lucide-react";
 import UserTrackingModal from "../Customers/UserTrackingModal";
+import { MyContext } from "../../App";
 
 // Register Chart.js components
 ChartJS.register(
@@ -49,10 +52,11 @@ ChartJS.register(
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { dashboardDateRange, setDashboardDateRange } = useContext(MyContext) || {};
 
   // State
   const [refreshing, setRefreshing] = useState(false);
-  const [periodFilter, setPeriodFilter] = useState("last_6_months");
+  const [periodFilter, setPeriodFilter] = useState("all_time");
   const [distTarget, setDistTarget] = useState("property");
   const [revenuePeriod, setRevenuePeriod] = useState("Monthly");
   const [userTab, setUserTab] = useState("all");
@@ -68,9 +72,12 @@ const Dashboard = () => {
 
       try {
         const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
-        const res = await axios.post(`${baseUrl}/api/get_dashboard`, {
-          filter_period: periodFilter,
-        });
+        const payload = {
+          filter_period: dashboardDateRange?.preset || periodFilter,
+          start_date: dashboardDateRange?.startDate || null,
+          end_date: dashboardDateRange?.endDate || null,
+        };
+        const res = await axios.post(`${baseUrl}/api/get_dashboard`, payload);
 
         if (res.data?.data) {
           setDashboardData(res.data.data);
@@ -81,7 +88,7 @@ const Dashboard = () => {
         setRefreshing(false);
       }
     },
-    [periodFilter]
+    [dashboardDateRange, periodFilter]
   );
 
   useEffect(() => {
@@ -146,8 +153,7 @@ const Dashboard = () => {
       const t = (u.type || "").toLowerCase();
       let matchesTab = true;
       if (userTab === "owners") matchesTab = t.includes("owner");
-      else if (userTab === "buyers") matchesTab = t.includes("buyer");
-      else if (userTab === "tenants") matchesTab = t.includes("tenant");
+      else if (userTab === "buyers") matchesTab = t.includes("buyer") || t.includes("tenant");
       else if (userTab === "pg") matchesTab = t.includes("pg");
       else if (userTab === "builders")
         matchesTab = t.includes("builder") || t.includes("developer");
@@ -168,16 +174,36 @@ const Dashboard = () => {
     });
   }, [recentUsers, userTab, userSearch]);
 
+  // Reset to All Time (Overall Data) Handler
+  const handleResetToAllTime = (e) => {
+    if (e) e.stopPropagation();
+    if (setDashboardDateRange) {
+      setDashboardDateRange({
+        startDate: "",
+        endDate: "",
+        label: "All Time (Overall Data)",
+        preset: "all_time",
+      });
+    }
+  };
+
+  const hasActiveFilter =
+    Boolean(dashboardDateRange?.preset) &&
+    dashboardDateRange?.preset !== "all_time" &&
+    (Boolean(dashboardDateRange?.startDate) ||
+      Boolean(dashboardDateRange?.endDate) ||
+      dashboardDateRange?.preset !== "all_time");
+
   // Export Report Handler
   const handleExportReport = () => {
     const csvContent =
       "data:text/csv;charset=utf-8," +
+      `"ZeroBriks Admin Dashboard Report"\n` +
+      `"Selected Period","${dashboardDateRange?.label || "All Time (Overall Data)"}"\n\n` +
       "Metric,Count,Growth\n" +
       `Total Users,${kpi.total_users.count},${kpi.total_users.growth}\n` +
       `Property Owners,${kpi.owners.count},${kpi.owners.growth}\n` +
-      `Buyers,${kpi.buyers.count},${kpi.buyers.growth}\n` +
-      `Tenants,${kpi.tenants.count},${kpi.tenants.growth}\n` +
-      `PG Seekers,${kpi.pg_seekers.count},${kpi.pg_seekers.growth}\n` +
+      `Buyer / Tenant,${kpi.buyers.count + (kpi.tenants?.count || 0)},${kpi.buyers.growth}\n` +
       `Builders,${kpi.builders.count},${kpi.builders.growth}\n` +
       `Total Properties,${kpi.total_properties.count},${kpi.total_properties.growth}\n`;
 
@@ -208,30 +234,12 @@ const Dashboard = () => {
         pointHoverRadius: 5,
       },
       {
-        label: "Buyers",
-        data: regTrend.datasets?.buyers || [],
+        label: "Buyer / Tenant",
+        data: (regTrend.datasets?.buyers || []).map(
+          (b, i) => b + (regTrend.datasets?.tenants?.[i] || 0)
+        ),
         borderColor: "#D97706",
         backgroundColor: "#D97706",
-        borderWidth: 2,
-        tension: 0.35,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-      },
-      {
-        label: "Tenants",
-        data: regTrend.datasets?.tenants || [],
-        borderColor: "#0284C7",
-        backgroundColor: "#0284C7",
-        borderWidth: 2,
-        tension: 0.35,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-      },
-      {
-        label: "PG Seekers",
-        data: regTrend.datasets?.pg_seekers || [],
-        borderColor: "#7C3AED",
-        backgroundColor: "#7C3AED",
         borderWidth: 2,
         tension: 0.35,
         pointRadius: 3,
@@ -410,25 +418,11 @@ const Dashboard = () => {
       iconBg: "bg-amber-50 text-amber-600",
     },
     {
-      label: "Buyers",
-      count: kpi.buyers.count,
+      label: "Buyer / Tenant",
+      count: (kpi.buyers?.count || 0) + (kpi.tenants?.count || 0),
       growth: kpi.buyers.growth,
       icon: Users,
       iconBg: "bg-red-50 text-red-700",
-    },
-    {
-      label: "Tenants",
-      count: kpi.tenants.count,
-      growth: kpi.tenants.growth,
-      icon: Building2,
-      iconBg: "bg-emerald-50 text-emerald-600",
-    },
-    {
-      label: "PG Seekers",
-      count: kpi.pg_seekers.count,
-      growth: kpi.pg_seekers.growth,
-      icon: Bed,
-      iconBg: "bg-purple-50 text-purple-600",
     },
     {
       label: "Builders",
@@ -460,32 +454,94 @@ const Dashboard = () => {
   return (
     <div className="w-full bg-[#F4F6F9] min-h-[calc(100vh-4rem)] text-[#1E293B] pb-8 font-sans">
       <div className="max-w-[1600px] mx-auto px-3 sm:px-5 pt-3">
-        {/* Top Action Row: Refresh status on left, Export Report Gold Button on right */}
-        <div className="flex items-center justify-between mb-2.5">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            {refreshing && (
-              <span className="inline-flex items-center gap-1.5 text-[#780018] font-semibold">
-                <RefreshCw size={13} className="animate-spin" />
-                Updating live data...
-              </span>
-            )}
+        {/* Compact, Clean & Professional Dashboard Header Card */}
+        <div className="bg-white rounded-xl border border-gray-200/80 shadow-xs px-3.5 py-2.5 mb-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
+            {/* Left: Compact Branding & Title */}
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7A0E2E] to-[#50081C] text-white flex items-center justify-center shadow-xs flex-shrink-0">
+                <LayoutDashboard size={16} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm sm:text-base font-bold text-gray-900 tracking-tight leading-tight">
+                    Admin Dashboard
+                  </h2>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Live Platform Overview
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500 leading-none mt-0.5 hidden sm:block truncate">
+                  Real-time analytics, user growth, property performance & platform metrics
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Date Range Indicator, Refresh & Export Report */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Active Period Pill */}
+              <div
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border shadow-xs transition-colors ${hasActiveFilter
+                  ? "bg-rose-50/70 border-rose-200 text-[#7A0E2E]"
+                  : "bg-gray-50/80 border-gray-200 text-gray-700"
+                  }`}
+              >
+                <Calendar size={13} className={hasActiveFilter ? "text-[#7A0E2E]" : "text-gray-400"} />
+                <span className="text-gray-400 text-[10px] uppercase font-semibold">
+                  Period:
+                </span>
+                <span className="font-semibold text-gray-800 text-[11px] sm:text-xs">
+                  {dashboardDateRange?.label || "All Time (Overall Data)"}
+                </span>
+
+                {/* Cross icon ONLY if a non-default filter is selected */}
+                {hasActiveFilter && (
+                  <button
+                    type="button"
+                    onClick={handleResetToAllTime}
+                    className="p-0.5 rounded hover:bg-rose-200/70 text-[#7A0E2E] hover:text-[#50081C] transition-colors ml-0.5 flex items-center justify-center"
+                    title="Clear filter & show All Time"
+                  >
+                    <X size={12} strokeWidth={2.5} />
+                  </button>
+                )}
+              </div>
+
+              {/* Refresh Button */}
+              <button
+                type="button"
+                onClick={() => fetchDashboard(true)}
+                disabled={refreshing}
+                className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-60"
+                title="Refresh dashboard data"
+              >
+                <RefreshCw
+                  size={12}
+                  className={`text-[#7A0E2E] ${refreshing ? "animate-spin" : ""}`}
+                />
+                <span className="text-[11px] hidden sm:inline">
+                  {refreshing ? "Refreshing..." : "Refresh"}
+                </span>
+              </button>
+
+              {/* Export Report Button */}
+              <button
+                type="button"
+                onClick={handleExportReport}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#7A0E2E] hover:bg-[#600B24] active:bg-[#4E081D] text-white text-xs font-semibold rounded-lg shadow-xs transition-all active:scale-95"
+              >
+                <Download size={13} />
+                <span className="text-[11px] sm:text-xs">Export</span>
+              </button>
+            </div>
           </div>
-          <button
-            onClick={handleExportReport}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-white text-xs font-bold rounded-lg shadow-sm transition-all active:scale-95"
-            style={{
-              background: "linear-gradient(90deg, #D49B35 0%, #B87D1B 100%)",
-            }}
-          >
-            <Download size={13} />
-            <span>Export Report</span>
-          </button>
         </div>
 
         {/* =========================================================================
-            ROW 1: 7 KPI STATS CARDS (Exact Screenshot Layout)
+            ROW 1: 5 KPI STATS CARDS (Buyer / Tenant unified)
         ========================================================================= */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3.5">
           {kpiCards.map((card, i) => {
             const IconComp = card.icon;
             return (
@@ -546,13 +602,7 @@ const Dashboard = () => {
                   <span className="w-2 h-2 rounded-full bg-[#881337]" /> Owners
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#D97706]" /> Buyers
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#0284C7]" /> Tenants
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#7C3AED]" /> PG Seekers
+                  <span className="w-2 h-2 rounded-full bg-[#D97706]" /> Buyer / Tenant
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-[#10B981]" /> Builders
@@ -583,10 +633,7 @@ const Dashboard = () => {
                   <span className="w-2 h-2 rounded-full bg-[#881337]" /> Owners
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#D97706]" /> Buyers
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#0284C7]" /> Tenants
+                  <span className="w-2 h-2 rounded-full bg-[#D97706]" /> Buyer / Tenant
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-[#7C3AED]" /> PG
@@ -624,14 +671,8 @@ const Dashboard = () => {
                         />
                         <div
                           style={{
-                            width: `${(c.buyers / t) * 100}%`,
+                            width: `${(((c.buyers || 0) + (c.tenants || 0)) / t) * 100}%`,
                             backgroundColor: "#D97706",
-                          }}
-                        />
-                        <div
-                          style={{
-                            width: `${(c.tenants / t) * 100}%`,
-                            backgroundColor: "#0284C7",
                           }}
                         />
                         <div
@@ -878,15 +919,7 @@ const Dashboard = () => {
                 },
                 {
                   id: "buyers",
-                  label: `Buyers (${kpi.buyers.count.toLocaleString("en-IN")})`,
-                },
-                {
-                  id: "tenants",
-                  label: `Tenants (${kpi.tenants.count.toLocaleString("en-IN")})`,
-                },
-                {
-                  id: "pg",
-                  label: `PG (${kpi.pg_seekers.count.toLocaleString("en-IN")})`,
+                  label: `Buyer / Tenant (${((kpi.buyers?.count || 0) + (kpi.tenants?.count || 0)).toLocaleString("en-IN")})`,
                 },
                 {
                   id: "builders",
@@ -896,11 +929,10 @@ const Dashboard = () => {
                 <button
                   key={tab.id}
                   onClick={() => setUserTab(tab.id)}
-                  className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all whitespace-nowrap border ${
-                    userTab === tab.id
-                      ? "bg-[#780018] text-white border-[#780018] shadow-sm"
-                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                  }`}
+                  className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all whitespace-nowrap border ${userTab === tab.id
+                    ? "bg-[#780018] text-white border-[#780018] shadow-sm"
+                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -930,12 +962,9 @@ const Dashboard = () => {
                     if (typeLower.includes("owner"))
                       badgeClass =
                         "bg-amber-50 text-amber-700 border border-amber-200";
-                    else if (typeLower.includes("buyer"))
+                    else if (typeLower.includes("buyer") || typeLower.includes("tenant"))
                       badgeClass =
                         "bg-sky-50 text-sky-700 border border-sky-200";
-                    else if (typeLower.includes("tenant"))
-                      badgeClass =
-                        "bg-emerald-50 text-emerald-700 border border-emerald-200";
                     else if (typeLower.includes("pg"))
                       badgeClass =
                         "bg-purple-50 text-purple-700 border border-purple-200";
@@ -965,7 +994,7 @@ const Dashboard = () => {
                           <span
                             className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${badgeClass}`}
                           >
-                            {u.type}
+                            {typeLower.includes("buyer") || typeLower.includes("tenant") ? "Buyer / Tenant" : u.type}
                           </span>
                         </td>
                         <td className="py-2.5 px-2 text-gray-700 font-medium">
@@ -1089,9 +1118,7 @@ const Dashboard = () => {
                   <tr className="border-b border-gray-200 text-gray-400 font-bold text-[10px]">
                     <th className="pb-2 pr-2">City</th>
                     <th className="pb-2 px-1.5 text-center">Owners</th>
-                    <th className="pb-2 px-1.5 text-center">Buyers</th>
-                    <th className="pb-2 px-1.5 text-center">Tenants</th>
-                    <th className="pb-2 px-1.5 text-center">PG Seekers</th>
+                    <th className="pb-2 px-1.5 text-center">Buyer / Tenant</th>
                     <th className="pb-2 px-1.5 text-center">Total Users</th>
                     <th className="pb-2 px-1.5 text-center">Properties</th>
                     <th className="pb-2 pl-1.5 text-right">Growth</th>
@@ -1107,13 +1134,7 @@ const Dashboard = () => {
                         {row.owners.toLocaleString("en-IN")}
                       </td>
                       <td className="py-2.5 px-1.5 text-center text-gray-600">
-                        {row.buyers.toLocaleString("en-IN")}
-                      </td>
-                      <td className="py-2.5 px-1.5 text-center text-gray-600">
-                        {row.tenants.toLocaleString("en-IN")}
-                      </td>
-                      <td className="py-2.5 px-1.5 text-center text-gray-600">
-                        {row.pg.toLocaleString("en-IN")}
+                        {((row.buyers || 0) + (row.tenants || 0)).toLocaleString("en-IN")}
                       </td>
                       <td className="py-2.5 px-1.5 text-center font-bold text-gray-900">
                         {row.total_users.toLocaleString("en-IN")}

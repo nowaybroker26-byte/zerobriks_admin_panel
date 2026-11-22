@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -9,12 +8,12 @@ import {
   faCommentDots,
   faBuilding,
   faSearch,
-  faArrowLeft,
   faSyncAlt,
   faExclamationTriangle,
   faPhoneAlt,
-  faFilter,
   faQuoteLeft,
+  faTimes,
+  faUndo,
 } from "@fortawesome/free-solid-svg-icons";
 
 const FeedbackList = () => {
@@ -25,7 +24,7 @@ const FeedbackList = () => {
   const [ratingFilter, setRatingFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("desc"); // 'desc' = highest rating first
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   // Fetch feedbacks from API
   const fetchFeedbacks = async () => {
@@ -78,7 +77,7 @@ const FeedbackList = () => {
 
         // Search query
         if (!searchQuery.trim()) return true;
-        const q = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase().trim();
         return (
           fb.name?.toLowerCase().includes(q) ||
           fb.email?.toLowerCase().includes(q) ||
@@ -94,37 +93,38 @@ const FeedbackList = () => {
       });
   }, [feedbacks, searchQuery, ratingFilter, sortOrder]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredFeedbacks.length / itemsPerPage) || 1;
-  const paginatedFeedbacks = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredFeedbacks.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredFeedbacks, currentPage]);
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, ratingFilter, sortOrder, pageSize]);
 
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  // Pagination logic
+  const totalPages = Math.max(1, Math.ceil(filteredFeedbacks.length / pageSize));
+  const paginatedFeedbacks = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredFeedbacks.slice(startIndex, startIndex + pageSize);
+  }, [filteredFeedbacks, currentPage, pageSize]);
 
   // Star render helper
   const renderStars = (rating) => {
     const num = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
     return (
-      <div className="d-inline-flex align-items-center gap-0.5">
-        {Array.from({ length: 5 }, (_, i) => (
-          <FontAwesomeIcon
-            key={i}
-            icon={faStar}
-            style={{
-              color: i < num ? "#F59E0B" : "#CBD5E1",
-              fontSize: "12px",
-            }}
-          />
-        ))}
+      <div className="inline-flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
+          {Array.from({ length: 5 }, (_, i) => (
+            <FontAwesomeIcon
+              key={i}
+              icon={faStar}
+              style={{
+                color: i < num ? "#F59E0B" : "#CBD5E1",
+                fontSize: "11px",
+              }}
+            />
+          ))}
+        </div>
         <span
-          className="ms-1.5 fw-bold"
-          style={{ fontSize: "12px", color: num >= 4 ? "#85621e" : "#64748B" }}
+          className="font-bold text-xs ms-1"
+          style={{ color: num >= 4 ? "#85621e" : "#64748B" }}
         >
           {Number(rating || 0).toFixed(1)}
         </span>
@@ -133,18 +133,18 @@ const FeedbackList = () => {
   };
 
   return (
-    <div className="container-fluid pt-3 px-4 pb-5" style={{ minHeight: "100vh" }}>
+    <div className="w-full max-w-7xl mx-auto px-4 py-6" style={{ minHeight: "100vh" }}>
       {/* Error Alert */}
       {error && (
         <div
-          className="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 mb-3 d-flex align-items-center"
+          className="alert alert-danger alert-dismissible fade show shadow-sm rounded-xl mb-3 d-flex align-items-center text-sm"
           role="alert"
         >
           <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
           <div className="flex-grow-1">{error}</div>
           <button
             type="button"
-            className="btn-close"
+            className="btn-close text-xs"
             onClick={() => setError("")}
             aria-label="Close"
           ></button>
@@ -152,318 +152,375 @@ const FeedbackList = () => {
       )}
 
       {/* Main Card */}
-      <div className="bg-white rounded-4 shadow-sm border p-4">
-        {/* Header Section */}
-        <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
-          <div>
-            <div className="d-flex align-items-center gap-2 mb-1">
-              <Link
-                to="/dashboard"
-                className="text-decoration-none text-muted small fw-semibold d-inline-flex align-items-center"
-              >
-                <FontAwesomeIcon icon={faArrowLeft} className="me-1" />
-                Back to Dashboard
-              </Link>
-              <span className="text-muted small">•</span>
-              <span
-                className="badge rounded-pill px-2.5 py-0.5 fw-bold text-uppercase"
-                style={{
-                  backgroundColor: "rgba(122, 14, 46, 0.08)",
-                  color: "#7A0E2E",
-                  fontSize: "11px",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Quality & Reputation
-              </span>
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4 sm:p-6 overflow-hidden">
+        {/* ================================================================
+            PAGE HEADER (Compact, Sleek, Professional)
+        ================================================================= */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm flex-shrink-0"
+              style={{ backgroundColor: "#7A0E2E" }}
+            >
+              <FontAwesomeIcon
+                icon={faCommentDots}
+                className="text-base text-amber-300"
+              />
             </div>
-            <h3 className="h4 fw-bold text-dark mb-1 d-flex align-items-center">
-              <span
-                className="d-inline-flex align-items-center justify-content-center rounded-circle me-2"
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  backgroundColor: "rgba(122, 14, 46, 0.1)",
-                  color: "#7A0E2E",
-                }}
-              >
-                <FontAwesomeIcon icon={faCommentDots} />
-              </span>
-              Customer Feedbacks & Reviews
-            </h3>
-            <p className="text-muted small mb-0">
-              Read customer reviews, satisfaction scores, and feedback submitted for property listings.
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-gray-900 tracking-tight m-0">
+                  Customer Feedbacks & Reviews
+                </h2>
+                <span
+                  className="badge rounded-pill fw-semibold"
+                  style={{
+                    backgroundColor: "rgba(122, 14, 46, 0.08)",
+                    color: "#7A0E2E",
+                    fontSize: "11.5px",
+                    padding: "3px 8px",
+                  }}
+                >
+                  {feedbacks.length} Total
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 m-0">
+                Read customer reviews, satisfaction scores, and feedback submitted for property listings
+              </p>
+            </div>
           </div>
 
-          {/* Action & Rating Summary */}
-          <div className="d-flex align-items-center gap-2 mt-3 mt-md-0 flex-wrap">
+          {/* Action & Rating Summary (Compact & Clean) */}
+          <div className="flex items-center gap-2 flex-wrap">
             {feedbacks.length > 0 && (
               <div
-                className="px-3 py-1.5 rounded-pill border d-inline-flex align-items-center shadow-xs"
+                className="px-3 py-1.5 rounded-lg border inline-flex items-center gap-1.5 shadow-xs"
                 style={{
-                  backgroundColor: "rgba(166, 129, 57, 0.1)",
+                  height: "36px",
+                  backgroundColor: "rgba(166, 129, 57, 0.08)",
                   borderColor: "rgba(166, 129, 57, 0.25)",
                 }}
               >
-                <FontAwesomeIcon icon={faStar} className="me-1.5" style={{ color: "#F59E0B" }} />
-                <span className="fw-bold me-1 text-dark" style={{ fontSize: "13px" }}>
+                <FontAwesomeIcon icon={faStar} style={{ color: "#F59E0B", fontSize: "12px" }} />
+                <span className="font-bold text-gray-900 text-xs">
                   {averageRating}
                 </span>
-                <span className="text-muted small">/ 5.0 Avg ({feedbacks.length})</span>
+                <span className="text-gray-500 text-[11.5px]">/ 5.0 Avg ({feedbacks.length})</span>
               </div>
             )}
 
             <button
               onClick={fetchFeedbacks}
               disabled={loading}
-              className="btn btn-outline-secondary px-3.5 py-2 fw-semibold rounded-pill shadow-xs transition d-inline-flex align-items-center"
-              style={{ borderColor: "#CBD5E1", color: "#334155" }}
+              className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 shadow-xs"
+              style={{ height: "36px", fontSize: "12px", borderRadius: "8px" }}
               title="Refresh feedbacks"
             >
               <FontAwesomeIcon
                 icon={faSyncAlt}
-                className={`me-1.5 ${loading ? "fa-spin" : ""}`}
+                className={`text-xs ${loading ? "fa-spin" : ""}`}
               />
-              Refresh
+              <span>Refresh</span>
             </button>
           </div>
         </div>
 
-        {/* Filter and Search Bar */}
-        <div className="row g-3 align-items-center mb-4">
-          {/* Search Input */}
-          <div className="col-12 col-md-5">
-            <div className="input-group">
-              <span
-                className="input-group-text bg-white border-end-0 text-muted"
-                style={{ borderColor: "#E2E8F0" }}
-              >
-                <FontAwesomeIcon icon={faSearch} />
-              </span>
+        {/* Scoped CSS for scrollbar hiding */}
+        <style>{`
+          .filter-horizontal-scroll::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+          .filter-horizontal-scroll {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+          }
+        `}</style>
+
+        {/* ================================================================
+            SLEEK SINGLE-ROW HORIZONTAL FILTER TOOLBAR
+        ================================================================= */}
+        <div
+          className="p-2.5 rounded-xl mb-3 border bg-gray-50/80 shadow-xs mt-3"
+          style={{ borderColor: "#E2E8F0" }}
+        >
+          <div
+            className="flex flex-nowrap items-center gap-2 overflow-x-auto filter-horizontal-scroll"
+            style={{
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            {/* Search Input */}
+            <div className="relative" style={{ flex: "1 1 260px", minWidth: "180px" }}>
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="text-gray-400 text-xs absolute left-3 top-1/2 -translate-y-1/2"
+              />
               <input
                 type="text"
-                className="form-control border-start-0 ps-0 shadow-none"
-                style={{ borderColor: "#E2E8F0", fontSize: "14px" }}
-                placeholder="Search by name, email, phone, property, review..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name, email, phone, property, review..."
+                className="form-control form-control-sm bg-white border-secondary-subtle ps-4 pe-4 text-gray-800"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                  paddingLeft: "32px",
                 }}
               />
-            </div>
-          </div>
-
-          {/* Quick Filter Pills & Sorting */}
-          <div className="col-12 col-md-7 d-flex justify-content-md-end flex-wrap gap-1.5 align-items-center">
-            <span className="text-muted small me-1 d-none d-lg-inline">
-              <FontAwesomeIcon icon={faFilter} className="me-1 text-muted" /> Rating:
-            </span>
-            {[
-              { id: "all", label: "All Reviews" },
-              { id: "5", label: "5 ★ Only" },
-              { id: "4", label: "4 ★ Only" },
-              { id: "below4", label: "≤ 3 ★" },
-            ].map((tab) => {
-              const active = ratingFilter === tab.id;
-              return (
+              {searchQuery && (
                 <button
-                  key={tab.id}
-                  onClick={() => {
-                    setRatingFilter(tab.id);
-                    setCurrentPage(1);
-                  }}
-                  className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold transition ${
-                    active ? "text-white shadow-xs" : "btn-light text-muted border"
-                  }`}
-                  style={{
-                    backgroundColor: active ? "#7A0E2E" : "#F8FAFC",
-                    borderColor: active ? "#7A0E2E" : "#E2E8F0",
-                    fontSize: "12px",
-                  }}
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="btn btn-link position-absolute top-50 end-0 translate-middle-y p-0 me-2 text-muted"
+                  style={{ textDecoration: "none" }}
+                  title="Clear search"
                 >
-                  {tab.label}
+                  <FontAwesomeIcon icon={faTimes} className="text-xs" />
                 </button>
-              );
-            })}
-
-            {/* Sort Toggle */}
-            <button
-              onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
-              className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold shadow-xs ms-md-2"
-              style={{ borderColor: "#CBD5E1", fontSize: "12px" }}
-              title="Toggle sort order"
-            >
-              Rating: {sortOrder === "desc" ? "Highest First ↓" : "Lowest First ↑"}
-            </button>
-          </div>
-        </div>
-
-        {/* Counter Info */}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <span className="text-muted small fw-semibold">
-            Total Reviews: <strong className="text-dark">{feedbacks.length}</strong>
-            {searchQuery || ratingFilter !== "all" ? (
-              <span className="text-muted ms-2">
-                (Showing <strong>{filteredFeedbacks.length}</strong> matching)
-              </span>
-            ) : null}
-          </span>
-        </div>
-
-        {/* Loading Spinner */}
-        {loading && (
-          <div className="text-center py-5">
-            <div
-              className="spinner-border text-danger"
-              role="status"
-              style={{ color: "#7A0E2E" }}
-            >
-              <span className="visually-hidden">Loading feedbacks...</span>
+              )}
             </div>
-            <p className="text-muted mt-2 small">Loading feedback records...</p>
-          </div>
-        )}
 
-        {/* Empty State */}
-        {!loading && filteredFeedbacks.length === 0 && (
-          <div className="text-center py-5 border rounded-4 bg-light my-2">
-            <div
-              className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-              style={{
-                width: "56px",
-                height: "56px",
-                backgroundColor: "rgba(122, 14, 46, 0.08)",
-                color: "#7A0E2E",
-              }}
-            >
-              <FontAwesomeIcon icon={faStar} size="lg" style={{ color: "#A68139" }} />
+            {/* Rating Filter Dropdown */}
+            <div style={{ flex: "0 1 140px", minWidth: "120px" }}>
+              <select
+                value={ratingFilter}
+                onChange={(e) => setRatingFilter(e.target.value)}
+                className="form-select form-select-sm bg-white border-secondary-subtle text-gray-700 font-medium cursor-pointer"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                }}
+              >
+                <option value="all">All Ratings</option>
+                <option value="5">5 ★ Only</option>
+                <option value="4">4 ★ Only</option>
+                <option value="below4">≤ 3 ★ Only</option>
+              </select>
             </div>
-            <h5 className="fw-bold text-dark mb-1">
-              {feedbacks.length === 0 ? "No Feedbacks Found" : "No Matching Reviews"}
-            </h5>
-            <p className="text-muted small mb-3">
-              {feedbacks.length === 0
-                ? "Reviews and feedbacks submitted by customers will appear here."
-                : "Try adjusting your search query or rating filter."}
-            </p>
-            {searchQuery || ratingFilter !== "all" ? (
+
+            {/* Sort Order Dropdown */}
+            <div style={{ flex: "0 1 165px", minWidth: "145px" }}>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="form-select form-select-sm bg-white border-secondary-subtle text-gray-700 font-medium cursor-pointer"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                }}
+              >
+                <option value="desc">Rating: High to Low ↓</option>
+                <option value="asc">Rating: Low to High ↑</option>
+              </select>
+            </div>
+
+            {/* Page Size Dropdown */}
+            <div style={{ flex: "0 1 110px", minWidth: "95px" }}>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="form-select form-select-sm bg-white border-secondary-subtle text-gray-700 font-medium cursor-pointer"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                }}
+              >
+                <option value={10}>10 / page</option>
+                <option value={25}>25 / page</option>
+                <option value={50}>50 / page</option>
+              </select>
+            </div>
+
+            {/* Counter Badge */}
+            <div className="text-xs text-gray-500 font-medium px-1 flex-shrink-0">
+              Showing <strong className="text-gray-900">{filteredFeedbacks.length}</strong> of{" "}
+              <strong className="text-gray-900">{feedbacks.length}</strong>
+            </div>
+
+            {/* Reset Button */}
+            {(searchQuery || ratingFilter !== "all" || sortOrder !== "desc") && (
               <button
+                type="button"
                 onClick={() => {
                   setSearchQuery("");
                   setRatingFilter("all");
+                  setSortOrder("desc");
                 }}
-                className="btn btn-sm btn-outline-secondary px-3 py-1.5 rounded-pill fw-semibold"
+                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 flex-shrink-0"
+                style={{ height: "36px", fontSize: "12px", borderRadius: "8px" }}
+                title="Reset Filters"
               >
-                Clear Filters
-              </button>
-            ) : (
-              <button
-                onClick={fetchFeedbacks}
-                className="btn btn-sm text-white px-3.5 py-1.5 rounded-pill fw-semibold"
-                style={{ backgroundColor: "#7A0E2E" }}
-              >
-                <FontAwesomeIcon icon={faSyncAlt} className="me-1" />
-                Reload
+                <FontAwesomeIcon icon={faUndo} className="text-xs" />
+                <span>Reset</span>
               </button>
             )}
           </div>
-        )}
+        </div>
 
-        {/* Feedbacks Table */}
-        {!loading && filteredFeedbacks.length > 0 && (
-          <div className="table-responsive rounded-3 border" style={{ borderColor: "#E2E8F0" }}>
-            <table className="table table-hover align-middle mb-0">
-              <thead
-                style={{
-                  backgroundColor: "#F8FAFC",
-                  borderBottom: "2px solid #E2E8F0",
-                }}
-              >
-                <tr
-                  className="text-muted small text-uppercase fw-bold"
-                  style={{ fontSize: "11px", letterSpacing: "0.5px" }}
+        {/* ================================================================
+            FEEDBACKS DATA TABLE (With In-Table Loader & Empty State)
+        ================================================================= */}
+        <div className="overflow-x-auto mt-3">
+          <table
+            className="table table-hover align-middle border-separate border-spacing-0 w-full"
+            style={{ borderRadius: "10px", overflow: "hidden" }}
+          >
+            <thead>
+              <tr>
+                <th
+                  className="py-3 px-3 text-center text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", width: "45px" }}
                 >
-                  <th style={{ width: "45px" }} className="py-3 px-3 text-center">
-                    #
-                  </th>
-                  <th style={{ minWidth: "190px" }} className="py-3">
-                    <FontAwesomeIcon icon={faUser} className="me-1.5 text-muted" />
-                    User Details
-                  </th>
-                  <th style={{ minWidth: "160px" }} className="py-3">
-                    <FontAwesomeIcon icon={faBuilding} className="me-1.5 text-muted" />
-                    Property
-                  </th>
-                  <th style={{ minWidth: "150px" }} className="py-3">
-                    <FontAwesomeIcon icon={faStar} className="me-1.5 text-muted" />
-                    Rating
-                  </th>
-                  <th style={{ minWidth: "280px" }} className="py-3">
-                    <FontAwesomeIcon icon={faCommentDots} className="me-1.5 text-muted" />
-                    Customer Feedback
-                  </th>
+                  #
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "190px" }}
+                >
+                  <FontAwesomeIcon icon={faUser} className="mr-1.5 text-amber-300" />
+                  User Details
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "170px" }}
+                >
+                  <FontAwesomeIcon icon={faBuilding} className="mr-1.5 text-amber-300" />
+                  Property
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "140px" }}
+                >
+                  <FontAwesomeIcon icon={faStar} className="mr-1.5 text-amber-300" />
+                  Rating
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "300px" }}
+                >
+                  <FontAwesomeIcon icon={faCommentDots} className="mr-1.5 text-amber-300" />
+                  Customer Feedback
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-12">
+                    <div
+                      className="spinner-border text-danger"
+                      role="status"
+                      style={{ color: "#7A0E2E", width: "2.2rem", height: "2.2rem" }}
+                    >
+                      <span className="visually-hidden">Loading feedbacks...</span>
+                    </div>
+                    <p className="text-muted mt-2.5 text-xs font-semibold mb-0">
+                      Loading feedback records...
+                    </p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {paginatedFeedbacks.map((feedback, index) => {
-                  const rowNumber = (currentPage - 1) * itemsPerPage + index + 1;
+              ) : filteredFeedbacks.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-12">
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
+                      style={{
+                        width: "44px",
+                        height: "44px",
+                        backgroundColor: "rgba(122, 14, 46, 0.08)",
+                        color: "#7A0E2E",
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faStar} className="text-base" style={{ color: "#A68139" }} />
+                    </div>
+                    <h6 className="fw-bold text-gray-900 mb-1 text-sm">
+                      {feedbacks.length === 0 ? "No Feedbacks Found" : "No Matching Reviews Found"}
+                    </h6>
+                    <p className="text-muted text-xs mb-3">
+                      {feedbacks.length === 0
+                        ? "Reviews and feedbacks submitted by customers will appear here."
+                        : "Try adjusting your search query or rating filter."}
+                    </p>
+                    {searchQuery || ratingFilter !== "all" ? (
+                      <button
+                        onClick={() => {
+                          setSearchQuery("");
+                          setRatingFilter("all");
+                        }}
+                        className="btn btn-sm btn-outline-secondary px-3 py-1.5 rounded-lg text-xs font-semibold"
+                      >
+                        Clear Filters
+                      </button>
+                    ) : (
+                      <button
+                        onClick={fetchFeedbacks}
+                        className="btn btn-sm text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs"
+                        style={{ backgroundColor: "#7A0E2E" }}
+                      >
+                        <FontAwesomeIcon icon={faSyncAlt} className="me-1" />
+                        Reload
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                paginatedFeedbacks.map((feedback, index) => {
+                  const rowNumber = (currentPage - 1) * pageSize + index + 1;
 
                   return (
                     <tr
                       key={feedback._id || index}
-                      className="transition"
+                      className="hover:bg-rose-50/20 transition-colors"
                       style={{ borderBottom: "1px solid #F1F5F9" }}
                     >
-                      <td className="px-3 text-center text-muted fw-semibold small">
+                      <td className="px-3 text-center text-gray-500 font-semibold text-xs">
                         {rowNumber}
                       </td>
 
                       {/* User Info */}
-                      <td className="py-3">
-                        <div className="d-flex align-items-center">
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2.5">
                           <div
-                            className="rounded-circle d-flex align-items-center justify-content-center me-2 text-white fw-bold flex-shrink-0"
-                            style={{
-                              width: "34px",
-                              height: "34px",
-                              backgroundColor: "#7A0E2E",
-                              fontSize: "13px",
-                            }}
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-xs select-none"
+                            style={{ backgroundColor: "#7A0E2E" }}
                           >
                             {(feedback.name || "U").charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <span className="fw-semibold text-dark d-block">
+                            <span className="font-bold text-gray-900 text-xs block">
                               {feedback.name || "Anonymous Reviewer"}
                             </span>
                             {feedback.email && (
                               <a
                                 href={`mailto:${feedback.email}`}
-                                className="text-muted small text-decoration-none d-inline-flex align-items-center hover-underline"
-                                style={{ fontSize: "12px" }}
+                                className="text-gray-500 text-[11px] hover:text-[#7A0E2E] transition-colors inline-flex items-center gap-1"
                               >
                                 <FontAwesomeIcon
                                   icon={faEnvelope}
-                                  className="me-1 text-muted"
-                                  size="xs"
+                                  className="text-[10px]"
                                 />
-                                {feedback.email}
+                                <span>{feedback.email}</span>
                               </a>
                             )}
                             {feedback.contact_number && (
                               <a
                                 href={`tel:${feedback.contact_number}`}
-                                className="text-muted small text-decoration-none d-block hover-underline"
-                                style={{ fontSize: "11px" }}
+                                className="text-gray-500 text-[11px] block hover:text-[#7A0E2E] transition-colors"
                               >
                                 <FontAwesomeIcon
                                   icon={faPhoneAlt}
-                                  className="me-1 text-muted"
-                                  size="xs"
+                                  className="text-[10px] me-1"
                                 />
-                                {feedback.contact_number}
+                                <span>{feedback.contact_number}</span>
                               </a>
                             )}
                           </div>
@@ -471,117 +528,168 @@ const FeedbackList = () => {
                       </td>
 
                       {/* Property Name */}
-                      <td className="py-3">
+                      <td className="py-3 px-3">
                         {feedback.property_name && feedback.property_name !== "-" ? (
                           <span
-                            className="badge rounded-pill px-2.5 py-1 fw-semibold text-truncate d-inline-block"
+                            className="badge rounded-pill px-2.5 py-1 font-semibold text-truncate inline-flex items-center gap-1"
                             style={{
                               backgroundColor: "rgba(122, 14, 46, 0.08)",
                               color: "#7A0E2E",
                               border: "1px solid rgba(122, 14, 46, 0.2)",
                               maxWidth: "200px",
-                              fontSize: "12px",
+                              fontSize: "11.5px",
                             }}
                             title={feedback.property_name}
                           >
-                            <FontAwesomeIcon icon={faBuilding} className="me-1" size="xs" />
-                            {feedback.property_name}
+                            <FontAwesomeIcon icon={faBuilding} className="text-[10px]" />
+                            <span className="truncate">{feedback.property_name}</span>
                           </span>
                         ) : (
-                          <span className="badge bg-light text-muted border px-2 py-1">
+                          <span className="badge bg-gray-100 text-gray-500 border border-gray-200 px-2 py-1 text-[11px]">
                             General Platform
                           </span>
                         )}
                       </td>
 
                       {/* Rating */}
-                      <td className="py-3">
+                      <td className="py-3 px-3">
                         {renderStars(feedback.rating)}
                       </td>
 
                       {/* Message */}
-                      <td className="py-3">
+                      <td className="py-3 px-3">
                         <div
-                          className="p-2.5 rounded-3 bg-light border small text-dark position-relative"
+                          className="p-2.5 rounded-lg bg-gray-50 border border-gray-200 text-xs text-gray-700 relative"
                           style={{
                             maxWidth: "460px",
-                            borderColor: "#E2E8F0",
                             lineHeight: "1.45",
                             wordBreak: "break-word",
                           }}
                         >
                           <FontAwesomeIcon
                             icon={faQuoteLeft}
-                            className="me-1.5 opacity-25"
+                            className="mr-1.5 opacity-30 text-[#7A0E2E]"
                             size="xs"
-                            style={{ color: "#7A0E2E" }}
                           />
-                          {feedback.feedback_msg || "No comments provided."}
+                          <span>{feedback.feedback_msg || "No comments provided."}</span>
                         </div>
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Pagination Section */}
-        {!loading && totalPages > 1 && (
-          <div className="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3 border-top">
-            <span className="text-muted small">
+        {/* ================================================================
+            PAGINATION SECTION
+        ================================================================= */}
+        {!loading && filteredFeedbacks.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 mt-3 border-t border-gray-100 text-xs text-gray-500">
+            <div>
               Showing{" "}
-              <strong>
-                {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                {Math.min(currentPage * itemsPerPage, filteredFeedbacks.length)}
+              <strong className="text-gray-900">
+                {(currentPage - 1) * pageSize + 1}
               </strong>{" "}
-              of <strong>{filteredFeedbacks.length}</strong> reviews
-            </span>
+              to{" "}
+              <strong className="text-gray-900">
+                {Math.min(currentPage * pageSize, filteredFeedbacks.length)}
+              </strong>{" "}
+              of{" "}
+              <strong className="text-gray-900">{filteredFeedbacks.length}</strong>{" "}
+              reviews
+            </div>
 
-            <nav aria-label="Feedback pagination">
-              <ul className="pagination pagination-sm mb-0 gap-1">
-                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                  <button
-                    className="page-link rounded-pill px-3"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                  >
-                    Previous
-                  </button>
-                </li>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <li
-                    key={page}
-                    className={`page-item ${currentPage === page ? "active" : ""}`}
-                  >
+            <div className="flex items-center gap-2">
+              <nav aria-label="Feedback pagination">
+                <ul className="pagination pagination-sm mb-0 gap-1 align-items-center flex-wrap">
+                  {/* First */}
+                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
                     <button
-                      className="page-link rounded-circle d-flex align-items-center justify-content-center"
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        backgroundColor: currentPage === page ? "#7A0E2E" : undefined,
-                        borderColor: currentPage === page ? "#7A0E2E" : undefined,
-                      }}
-                      onClick={() => handlePageChange(page)}
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      title="First Page"
                     >
-                      {page}
+                      « First
                     </button>
                   </li>
-                ))}
-                <li
-                  className={`page-item ${
-                    currentPage === totalPages ? "disabled" : ""
-                  }`}
-                >
-                  <button
-                    className="page-link rounded-pill px-3"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                  >
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav>
+
+                  {/* Prev */}
+                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      title="Previous Page"
+                    >
+                      ‹ Prev
+                    </button>
+                  </li>
+
+                  {/* Numeric Page Buttons */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => {
+                      return (
+                        p === 1 ||
+                        p === totalPages ||
+                        Math.abs(p - currentPage) <= 2
+                      );
+                    })
+                    .map((pageNum, idx, arr) => {
+                      const prev = arr[idx - 1];
+                      const isActive = currentPage === pageNum;
+                      return (
+                        <React.Fragment key={pageNum}>
+                          {prev && pageNum - prev > 1 && (
+                            <li className="page-item disabled px-1 text-muted small">...</li>
+                          )}
+                          <li className={`page-item ${isActive ? "active" : ""}`}>
+                            <button
+                              className="page-link rounded-2 fw-bold text-xs d-flex align-items-center justify-content-center shadow-xs"
+                              style={{
+                                minWidth: "30px",
+                                height: "30px",
+                                backgroundColor: isActive ? "#7A0E2E" : undefined,
+                                borderColor: isActive ? "#7A0E2E" : undefined,
+                                color: isActive ? "#FFFFFF" : undefined,
+                              }}
+                              onClick={() => setCurrentPage(pageNum)}
+                            >
+                              {pageNum}
+                            </button>
+                          </li>
+                        </React.Fragment>
+                      );
+                    })}
+
+                  {/* Next */}
+                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      title="Next Page"
+                    >
+                      Next ›
+                    </button>
+                  </li>
+
+                  {/* Last */}
+                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      title="Last Page"
+                    >
+                      Last »
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
           </div>
         )}
       </div>

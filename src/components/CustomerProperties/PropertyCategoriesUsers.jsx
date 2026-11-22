@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import {
-  faHandshake, faBuilding, faUser, faStore, faDraftingCompass, faUserTie
+  faBuilding, faUser, faStore
 } from '@fortawesome/free-solid-svg-icons';
 const PropertyCategoriesUsers = () => {
   const navigate = useNavigate();
@@ -58,18 +58,18 @@ const PropertyCategoriesUsers = () => {
               <span className="text-gray-400">&rarr;</span>
             </li>
 
-            {/* Dealer List Item */}
+            {/* Buyer / Tenant List Item */}
             <li
               className="flex items-center justify-between p-6 transition-colors cursor-pointer hover:bg-gray-50"
-              onClick={() => handleClick('Agent')}
+              onClick={() => handleClick('Buyer')}
             >
               <div className="flex items-center">
                 <div className="flex items-center justify-center w-12 h-12 p-3 mr-4 bg-blue-100 rounded-full">
                   <FontAwesomeIcon icon={faStore} className="text-blue-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-800">Tenant</h2>
-                  <p className="text-sm text-gray-500">Collaborate with property professionals.</p>
+                  <h2 className="text-lg font-semibold text-gray-800">Buyer / Tenant</h2>
+                  <p className="text-sm text-gray-500">Explore and find properties as a buyer or tenant.</p>
                 </div>
               </div>
               <span className="text-gray-400">&rarr;</span>

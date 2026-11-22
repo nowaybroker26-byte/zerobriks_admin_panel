@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { IoIosInformationCircle } from "react-icons/io";
-import { Trash } from "lucide-react"; // Using Lucide Icons for delete button
+import { Trash, Building2, ArrowLeft, ArrowRight, Check } from "lucide-react"; // Using Lucide Icons
 import { MdOutlineDriveFolderUpload } from "react-icons/md";
 import axios from "axios";
 import {
@@ -1550,53 +1550,106 @@ useEffect(() => {
   };
 
   return (
-    <div className="w-100 container-fluid mt-28">
-      <nav className="flex justify-end mb-4" aria-label="Breadcrumb">
-        <ol className="flex flex-wrap items-center space-x-2 md:space-x-4 text-sm">
-          <li>
-            <Link
-              to="/properties"
-              className="text-blue-600 font-medium hover:underline transition-colors"
-            >
-              Go To Properties
+    <div className="w-full min-h-screen bg-gray-50/60 pb-28 pt-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        {/* Breadcrumb & Navigation */}
+        <div className="flex items-center justify-between mb-4">
+          <nav className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+            <Link to="/properties" className="hover:text-[#7A0E2E] transition-colors">
+              Properties
             </Link>
-          </li>
-
-          <li className="text-gray-400">/</li>
-        </ol>
-      </nav>
-
-      <div className="min-h-screen bg-white flex flex-col items-center">
-        {/* Navbar */}
-        <nav className="w-full bg-gray-200 text-black p-4 flex justify-center items-center">
-          <h1 className="text-xl">Edit Property</h1>
-        </nav>
-
-        {/* Stepper Navigation */}
-        <div className="flex flex-wrap justify-center gap-2 p-3 bg-white w-full">
-          {steps.map((step, index) => (
-            <button
-              key={index}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                activeStep === index
-                  ? "bg-gray-200 text-purple-600"
-                  : "text-gray-600"
-              }`}
-              onClick={() => setActiveStep(index)}
-            >
-              {index + 1}. {step}
-            </button>
-          ))}
+            <span>/</span>
+            <span className="text-gray-900 font-semibold">Edit Property</span>
+          </nav>
+          <button
+            type="button"
+            onClick={() => navigate("/properties")}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Properties
+          </button>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-white p-6 w-full max-w-7xl">
+        {/* Header Card */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-5 sm:p-6 shadow-sm mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-xl bg-[#7A0E2E]/10 flex items-center justify-center text-[#7A0E2E] shrink-0">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  {formData?.property_name ? formData.property_name : "Edit Property"}
+                </h1>
+                {id && (
+                  <span className="font-mono text-xs bg-gray-100 text-gray-700 px-2.5 py-0.5 rounded-full border border-gray-200">
+                    ID: {id?.slice(-8).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                Update listing details, pricing, amenities, and media assets.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200/70 self-start sm:self-auto">
+            <span>Category:</span>
+            <span className="font-semibold text-gray-900">{propertyCategory || "All"}</span>
+          </div>
+        </div>
+
+        {/* Stepper Bar */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl p-2 sm:p-3 shadow-sm mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {steps.map((step, index) => {
+              const isCurrent = activeStep === index;
+              const isCompleted = activeStep > index;
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setActiveStep(index)}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all text-left ${
+                    isCurrent
+                      ? "bg-[#7A0E2E] text-white shadow-sm"
+                      : isCompleted
+                      ? "bg-[#7A0E2E]/10 text-[#7A0E2E] hover:bg-[#7A0E2E]/15"
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200/60"
+                  }`}
+                >
+                  <span
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                      isCurrent
+                        ? "bg-white text-[#7A0E2E]"
+                        : isCompleted
+                        ? "bg-[#7A0E2E] text-white"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {isCompleted ? <Check className="w-3 h-3 stroke-[3]" /> : index + 1}
+                  </span>
+                  <span className="truncate">{step}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Step Card Container */}
+        <div className="bg-white border border-gray-200/90 rounded-2xl shadow-sm p-6 sm:p-8">
           {/* Render Step Content */}
           {activeStep === 0 && (
-            <div className="max-w-3xl p-3 mx-auto mb-20 border border-gray-300 rounded-xl">
-              <h2 className="mb-4 text-xl font-semibold text-gray-800">
-                Basic Details
-              </h2>
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Basic Information</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Specify listing identity, category, and core classifications</p>
+                </div>
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                  Step 1 of {steps.length}
+                </span>
+              </div>
 
               {/* Property Name */}
               <div className="mb-4">
@@ -1934,13 +1987,17 @@ useEffect(() => {
           )}
 
           {activeStep === 1 && (
-            <>
-              <div className="max-w-5xl mx-auto mb-32 bg-white rounded-xl">
-                <h2 className="text-2xl text-gray-900">Project Address</h2>
-                <p className="mt-1 text-gray-500">
-                  Place the listing pin on the map
-                </p>
-                <div className="grid grid-cols-1 gap-6 mt-6 md:grid-cols-2">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Property Address & Location</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Specify street address, area, city, and geographical coordinates</p>
+                </div>
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                  Step 2 of {steps.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-6 mt-6 md:grid-cols-2">
                   {/* <div className="w-full overflow-hidden bg-gray-200 rounded-lg h-80">
                     <LoadScript
                       googleMapsApiKey={GOOGLE_MAPS_API_KEY}
@@ -2127,11 +2184,19 @@ useEffect(() => {
                   </div>
                 </div>
               </div>
-            </>
-          )}
+            )}
 
           {activeStep === 2 && (
-            <div className="max-w-5xl mx-auto mb-20 bg-white rounded-xl">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Property Details & Pricing</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Configure dimensions, pricing, structural details, and unit specs</p>
+                </div>
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                  Step 3 of {steps.length}
+                </span>
+              </div>
               {!(
                 (
                   propertyCategory === "Rent" &&
@@ -8901,21 +8966,22 @@ useEffect(() => {
           )}
 
           {activeStep === 3 && (
-            <div className="max-w-5xl p-3 mx-auto mb-3 bg-white border border-gray-300 rounded-xl">
-              <div>
-                <h2 className="text-2xl text-gray-900">Amenities</h2>
-                <p className="mt-1 text-gray-500">
-                  This section allows users to select available amenities for
-                  the property, with dynamically updated checkboxes to represent
-                  selected features.
-                </p>
-                {formErrors.amenities && (
-                  <p className="flex items-center gap-1 mt-1 text-sm text-red-500">
-                    <MdErrorOutline className="text-lg" />
-                    {formErrors.amenities}
-                  </p>
-                )}
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Amenities & Features</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Select all facilities and lifestyle amenities available at this property</p>
+                </div>
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                  Step 4 of {steps.length}
+                </span>
               </div>
+              {formErrors.amenities && (
+                <p className="flex items-center gap-1 mb-4 text-sm text-red-500">
+                  <MdErrorOutline className="text-lg" />
+                  {formErrors.amenities}
+                </p>
+              )}
 
               <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-3">
                 {amenitiesList.map((amenity, index) => (
@@ -8945,7 +9011,16 @@ useEffect(() => {
           )}
 
           {activeStep === 4 && (
-            <div className="max-w-5xl p-6 mx-auto">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Photos & Media Assets</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Upload cover image, gallery photos, virtual tour links, and documents</p>
+                </div>
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                  Step 5 of {steps.length}
+                </span>
+              </div>
               <div className="grid grid-cols-1 gap-6 mb-4 md:grid-cols-2">
                 {/* Upload Property Cover Photo */}
                 <div
@@ -9256,36 +9331,51 @@ useEffect(() => {
               </div>
             </div>
           )}
+        </div>
+      </div>
 
-          {/* Navigation Buttons - Fixed at Bottom */}
-          <div
-            className={`fixed bottom-0 left-40 right-0 bg-white p-4 shadow-md flex mx-32 ${
-              activeStep === 0 ? "justify-end" : "justify-between"
-            }`}
-          >
-            {activeStep > 0 && (
+      {/* Navigation Buttons - Fixed at Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg px-4 sm:px-8 py-3">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          <div>
+            {activeStep > 0 ? (
               <button
+                type="button"
                 onClick={prevStep}
-                className="bg-gray-300 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-400"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
               >
-                Back
+                <ArrowLeft className="w-4 h-4" />
+                Previous Step
               </button>
+            ) : (
+              <span className="text-xs text-gray-400 font-medium">Step 1: Basic Information</span>
             )}
+          </div>
 
+          <div className="text-xs text-gray-500 font-medium hidden sm:block">
+            Step <span className="font-bold text-gray-900">{activeStep + 1}</span> of {steps.length} — {steps[activeStep]}
+          </div>
+
+          <div className="flex items-center gap-2">
             {activeStep < steps.length - 1 ? (
               <button
+                type="button"
                 onClick={nextStep}
-                className="bg-purple-600 text-white px-5 py-2 rounded-lg hover:bg-purple-700"
+                className="inline-flex items-center gap-1.5 px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-[#7A0E2E] hover:bg-[#600b24] rounded-xl transition-all shadow-sm active:scale-95"
               >
                 Continue
+                <ArrowRight className="w-4 h-4" />
               </button>
             ) : (
               <button
+                type="button"
                 onClick={handleEdit}
                 disabled={isSubmitting}
-                className={`mt-4 px-4 py-2 rounded ${isSubmitting ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"} text-white`}
+                className={`inline-flex items-center gap-1.5 px-6 py-2 text-xs sm:text-sm font-semibold text-white rounded-xl transition-all shadow-sm ${
+                  isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 active:scale-95"
+                }`}
               >
-                {isSubmitting ? "Submitting..." : "Submit"}
+                {isSubmitting ? "Updating..." : "Save & Update Property"}
               </button>
             )}
           </div>

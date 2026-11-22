@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBox,
@@ -9,16 +9,16 @@ import {
   faCalendarAlt,
   faCheckCircle,
   faTimesCircle,
-  faClock,
   faSearch,
-  faArrowLeft,
   faSyncAlt,
   faExclamationTriangle,
-  faFilter,
   faCopy,
   faCheck,
   faReceipt,
   faCoins,
+  faTimes,
+  faUndo,
+  faLayerGroup,
 } from "@fortawesome/free-solid-svg-icons";
 
 const API_URL = `${process.env.REACT_APP_API_BASE_URL}/api/plan_purchase_history`;
@@ -31,7 +31,7 @@ const PlansPurchaseHistory = () => {
   const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'Active', 'Expired'
   const [copiedId, setCopiedId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const navigate = useNavigate();
 
@@ -101,7 +101,7 @@ const PlansPurchaseHistory = () => {
 
       // Search query
       if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       return (
         item.plan_name?.toLowerCase().includes(q) ||
         item.user_name?.toLowerCase().includes(q) ||
@@ -115,32 +115,31 @@ const PlansPurchaseHistory = () => {
     });
   }, [purchaseHistory, searchQuery, statusFilter]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage) || 1;
-  const paginatedHistory = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredHistory.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredHistory, currentPage]);
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, pageSize]);
 
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  // Pagination logic
+  const totalPages = Math.max(1, Math.ceil(filteredHistory.length / pageSize));
+  const paginatedHistory = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredHistory.slice(startIndex, startIndex + pageSize);
+  }, [filteredHistory, currentPage, pageSize]);
 
   return (
-    <div className="container-fluid pt-3 px-4 pb-5" style={{ minHeight: "100vh" }}>
+    <div className="w-full max-w-7xl mx-auto px-4 py-6" style={{ minHeight: "100vh" }}>
       {/* Error Alert */}
       {error && (
         <div
-          className="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 mb-3 d-flex align-items-center"
+          className="alert alert-danger alert-dismissible fade show shadow-sm rounded-xl mb-3 d-flex align-items-center text-sm"
           role="alert"
         >
           <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
           <div className="flex-grow-1">{error}</div>
           <button
             type="button"
-            className="btn-close"
+            className="btn-close text-xs"
             onClick={() => setError("")}
             aria-label="Close"
           ></button>
@@ -148,353 +147,388 @@ const PlansPurchaseHistory = () => {
       )}
 
       {/* Main Card */}
-      <div className="bg-white rounded-4 shadow-sm border p-4">
-        {/* Header Section */}
-        <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
-          <div>
-            <div className="d-flex align-items-center gap-2 mb-1">
-              <Link
-                to="/dashboard"
-                className="text-decoration-none text-muted small fw-semibold d-inline-flex align-items-center"
-              >
-                <FontAwesomeIcon icon={faArrowLeft} className="me-1" />
-                Back to Dashboard
-              </Link>
-              <span className="text-muted small">•</span>
-              <span
-                className="badge rounded-pill px-2.5 py-0.5 fw-bold text-uppercase"
-                style={{
-                  backgroundColor: "rgba(122, 14, 46, 0.08)",
-                  color: "#7A0E2E",
-                  fontSize: "11px",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Billing & Subscriptions
-              </span>
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4 sm:p-6 overflow-hidden">
+        {/* ================================================================
+            PAGE HEADER (Compact, Sleek, Professional)
+        ================================================================= */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm flex-shrink-0"
+              style={{ backgroundColor: "#7A0E2E" }}
+            >
+              <FontAwesomeIcon
+                icon={faReceipt}
+                className="text-base text-amber-300"
+              />
             </div>
-            <h3 className="h4 fw-bold text-dark mb-1 d-flex align-items-center">
-              <span
-                className="d-inline-flex align-items-center justify-content-center rounded-circle me-2"
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  backgroundColor: "rgba(122, 14, 46, 0.1)",
-                  color: "#7A0E2E",
-                }}
-              >
-                <FontAwesomeIcon icon={faClock} />
-              </span>
-              Plans Purchase History
-            </h3>
-            <p className="text-muted small mb-0">
-              Audit log of customer subscription plan orders, transaction statuses, and expiration timelines.
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-gray-900 tracking-tight m-0">
+                  Plans Purchase History
+                </h2>
+                <span
+                  className="badge rounded-pill fw-semibold"
+                  style={{
+                    backgroundColor: "rgba(122, 14, 46, 0.08)",
+                    color: "#7A0E2E",
+                    fontSize: "11.5px",
+                    padding: "3px 8px",
+                  }}
+                >
+                  {purchaseHistory.length} Total
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 m-0">
+                Audit log of customer subscription plan orders, transaction statuses, and expiration timelines
+              </p>
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="d-flex align-items-center gap-2 mt-3 mt-md-0 flex-wrap">
+          {/* Action Buttons (Compact, Clean, Professional) */}
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => navigate("/plans-purchase")}
-              className="btn btn-outline-secondary px-3.5 py-2 fw-semibold rounded-pill shadow-xs transition"
-              style={{ borderColor: "#CBD5E1", color: "#334155" }}
+              className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 shadow-xs"
+              style={{ height: "36px", fontSize: "12px", borderRadius: "8px" }}
+              title="Manage subscription plans"
             >
-              Subscription Plans
+              <FontAwesomeIcon icon={faLayerGroup} className="text-xs" />
+              <span>Subscription Plans</span>
             </button>
 
             <button
               onClick={fetchPurchaseHistory}
               disabled={loading}
-              className="btn text-white px-3.5 py-2 fw-semibold rounded-pill shadow-sm transition d-inline-flex align-items-center"
+              className="btn btn-sm text-white d-inline-flex align-items-center gap-1.5 px-3.5 rounded-lg text-xs font-semibold shadow-xs"
               style={{
+                height: "36px",
+                fontSize: "12px",
+                borderRadius: "8px",
                 backgroundColor: "#7A0E2E",
                 borderColor: "#7A0E2E",
               }}
+              title="Refresh history"
             >
               <FontAwesomeIcon
                 icon={faSyncAlt}
-                className={`me-1.5 ${loading ? "fa-spin" : ""}`}
+                className={`text-xs ${loading ? "fa-spin" : ""}`}
               />
-              Refresh History
+              <span>Refresh History</span>
             </button>
           </div>
         </div>
 
-        {/* Quick Metric Cards */}
-        <div className="row g-3 mb-4">
-          <div className="col-6 col-md-3">
-            <div
-              className="p-3 rounded-3 border bg-light"
-              style={{ borderColor: "#E2E8F0" }}
-            >
-              <span className="text-muted small d-block mb-1 fw-semibold">
-                Total Orders
-              </span>
-              <h4 className="fw-bold text-dark mb-0">{stats.total}</h4>
-            </div>
+        {/* Quick Metric Pills (Compact, Space-Saving) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-3">
+          <div className="p-2.5 rounded-xl border border-gray-200/80 bg-gray-50/60 flex items-center justify-between">
+            <span className="text-xs text-gray-500 font-medium">Total Orders</span>
+            <span className="text-xs font-bold text-gray-900 bg-white px-2 py-0.5 rounded-md border border-gray-200 shadow-xs">
+              {stats.total}
+            </span>
           </div>
-          <div className="col-6 col-md-3">
-            <div
-              className="p-3 rounded-3 border"
-              style={{
-                backgroundColor: "rgba(16, 185, 129, 0.06)",
-                borderColor: "rgba(16, 185, 129, 0.2)",
-              }}
-            >
-              <span
-                className="small d-block mb-1 fw-semibold"
-                style={{ color: "#059669" }}
-              >
-                Active Plans
-              </span>
-              <h4 className="fw-bold mb-0" style={{ color: "#059669" }}>
-                {stats.active}
-              </h4>
-            </div>
+          <div className="p-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/30 flex items-center justify-between">
+            <span className="text-xs text-emerald-700 font-medium">Active Plans</span>
+            <span className="text-xs font-bold text-emerald-800 bg-white px-2 py-0.5 rounded-md border border-emerald-200 shadow-xs">
+              {stats.active}
+            </span>
           </div>
-          <div className="col-6 col-md-3">
-            <div
-              className="p-3 rounded-3 border"
-              style={{
-                backgroundColor: "rgba(100, 116, 139, 0.06)",
-                borderColor: "rgba(100, 116, 139, 0.2)",
-              }}
-            >
-              <span className="text-muted small d-block mb-1 fw-semibold">
-                Expired Plans
-              </span>
-              <h4 className="fw-bold text-muted mb-0">{stats.expired}</h4>
-            </div>
+          <div className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-medium">Expired Plans</span>
+            <span className="text-xs font-bold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-xs">
+              {stats.expired}
+            </span>
           </div>
-          <div className="col-6 col-md-3">
-            <div
-              className="p-3 rounded-3 border"
-              style={{
-                backgroundColor: "rgba(166, 129, 57, 0.08)",
-                borderColor: "rgba(166, 129, 57, 0.25)",
-              }}
-            >
-              <span
-                className="small d-block mb-1 fw-semibold"
-                style={{ color: "#85621e" }}
-              >
-                Successful Txns
-              </span>
-              <h4 className="fw-bold mb-0" style={{ color: "#85621e" }}>
-                {stats.success}
-              </h4>
-            </div>
+          <div className="p-2.5 rounded-xl border border-amber-200/60 bg-amber-50/30 flex items-center justify-between">
+            <span className="text-xs text-amber-800 font-medium">Success Txns</span>
+            <span className="text-xs font-bold text-amber-900 bg-white px-2 py-0.5 rounded-md border border-amber-200 shadow-xs">
+              {stats.success}
+            </span>
           </div>
         </div>
 
-        {/* Filter and Search Bar */}
-        <div className="row g-3 align-items-center mb-4">
-          {/* Search Input */}
-          <div className="col-12 col-md-5">
-            <div className="input-group">
-              <span
-                className="input-group-text bg-white border-end-0 text-muted"
-                style={{ borderColor: "#E2E8F0" }}
-              >
-                <FontAwesomeIcon icon={faSearch} />
-              </span>
+        {/* Scoped CSS for scrollbar hiding */}
+        <style>{`
+          .filter-horizontal-scroll::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+          .filter-horizontal-scroll {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+          }
+        `}</style>
+
+        {/* ================================================================
+            SLEEK SINGLE-ROW HORIZONTAL FILTER TOOLBAR
+        ================================================================= */}
+        <div
+          className="p-2.5 rounded-xl mb-3 border bg-gray-50/80 shadow-xs"
+          style={{ borderColor: "#E2E8F0" }}
+        >
+          <div
+            className="flex flex-nowrap items-center gap-2 overflow-x-auto filter-horizontal-scroll"
+            style={{
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            {/* Search Input */}
+            <div className="relative" style={{ flex: "1 1 260px", minWidth: "180px" }}>
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="text-gray-400 text-xs absolute left-3 top-1/2 -translate-y-1/2"
+              />
               <input
                 type="text"
-                className="form-control border-start-0 ps-0 shadow-none"
-                style={{ borderColor: "#E2E8F0", fontSize: "14px" }}
-                placeholder="Search by plan, subscriber, payment, transaction ID..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by plan, subscriber, payment, transaction ID..."
+                className="form-control form-control-sm bg-white border-secondary-subtle ps-4 pe-4 text-gray-800"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                  paddingLeft: "32px",
                 }}
               />
-            </div>
-          </div>
-
-          {/* Quick Filter Status Tabs */}
-          <div className="col-12 col-md-7 d-flex justify-content-md-end flex-wrap gap-1.5 align-items-center">
-            <span className="text-muted small me-1 d-none d-lg-inline">
-              <FontAwesomeIcon icon={faFilter} className="me-1 text-muted" /> Filter:
-            </span>
-            {[
-              { id: "all", label: "All Orders" },
-              { id: "Active", label: "Active" },
-              { id: "Expired", label: "Expired" },
-            ].map((tab) => {
-              const active = statusFilter === tab.id;
-              return (
+              {searchQuery && (
                 <button
-                  key={tab.id}
-                  onClick={() => {
-                    setStatusFilter(tab.id);
-                    setCurrentPage(1);
-                  }}
-                  className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold transition ${
-                    active ? "text-white shadow-xs" : "btn-light text-muted border"
-                  }`}
-                  style={{
-                    backgroundColor: active ? "#7A0E2E" : "#F8FAFC",
-                    borderColor: active ? "#7A0E2E" : "#E2E8F0",
-                    fontSize: "12px",
-                  }}
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="btn btn-link position-absolute top-50 end-0 translate-middle-y p-0 me-2 text-muted"
+                  style={{ textDecoration: "none" }}
+                  title="Clear search"
                 >
-                  {tab.label}
+                  <FontAwesomeIcon icon={faTimes} className="text-xs" />
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Counter Info */}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <span className="text-muted small fw-semibold">
-            Total Orders: <strong className="text-dark">{purchaseHistory.length}</strong>
-            {searchQuery || statusFilter !== "all" ? (
-              <span className="text-muted ms-2">
-                (Showing <strong>{filteredHistory.length}</strong> matching)
-              </span>
-            ) : null}
-          </span>
-        </div>
-
-        {/* Loading Spinner */}
-        {loading && (
-          <div className="text-center py-5">
-            <div
-              className="spinner-border text-danger"
-              role="status"
-              style={{ color: "#7A0E2E" }}
-            >
-              <span className="visually-hidden">Loading history...</span>
+              )}
             </div>
-            <p className="text-muted mt-2 small">Loading order history...</p>
-          </div>
-        )}
 
-        {/* Empty State */}
-        {!loading && filteredHistory.length === 0 && (
-          <div className="text-center py-5 border rounded-4 bg-light my-2">
-            <div
-              className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-              style={{
-                width: "56px",
-                height: "56px",
-                backgroundColor: "rgba(122, 14, 46, 0.08)",
-                color: "#7A0E2E",
-              }}
-            >
-              <FontAwesomeIcon icon={faReceipt} size="lg" />
+            {/* Plan Status Dropdown */}
+            <div style={{ flex: "0 1 150px", minWidth: "130px" }}>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="form-select form-select-sm bg-white border-secondary-subtle text-gray-700 font-medium cursor-pointer"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                }}
+              >
+                <option value="all">All Orders</option>
+                <option value="Active">Active Plans</option>
+                <option value="Expired">Expired Plans</option>
+              </select>
             </div>
-            <h5 className="fw-bold text-dark mb-1">
-              {purchaseHistory.length === 0
-                ? "No Purchase History Found"
-                : "No Matching Orders"}
-            </h5>
-            <p className="text-muted small mb-3">
-              {purchaseHistory.length === 0
-                ? "Plan subscriptions purchased by users will be recorded here."
-                : "Try adjusting your search query or status filter."}
-            </p>
-            {searchQuery || statusFilter !== "all" ? (
+
+            {/* Page Size Dropdown */}
+            <div style={{ flex: "0 1 110px", minWidth: "95px" }}>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="form-select form-select-sm bg-white border-secondary-subtle text-gray-700 font-medium cursor-pointer"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                }}
+              >
+                <option value={10}>10 / page</option>
+                <option value={25}>25 / page</option>
+                <option value={50}>50 / page</option>
+              </select>
+            </div>
+
+            {/* Counter Badge */}
+            <div className="text-xs text-gray-500 font-medium px-1 flex-shrink-0">
+              Showing <strong className="text-gray-900">{filteredHistory.length}</strong> of{" "}
+              <strong className="text-gray-900">{purchaseHistory.length}</strong>
+            </div>
+
+            {/* Reset Button */}
+            {(searchQuery || statusFilter !== "all") && (
               <button
+                type="button"
                 onClick={() => {
                   setSearchQuery("");
                   setStatusFilter("all");
                 }}
-                className="btn btn-sm btn-outline-secondary px-3 py-1.5 rounded-pill fw-semibold"
+                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 flex-shrink-0"
+                style={{ height: "36px", fontSize: "12px", borderRadius: "8px" }}
+                title="Reset Filters"
               >
-                Clear Filters
-              </button>
-            ) : (
-              <button
-                onClick={fetchPurchaseHistory}
-                className="btn btn-sm text-white px-3.5 py-1.5 rounded-pill fw-semibold"
-                style={{ backgroundColor: "#7A0E2E" }}
-              >
-                <FontAwesomeIcon icon={faSyncAlt} className="me-1" />
-                Reload
+                <FontAwesomeIcon icon={faUndo} className="text-xs" />
+                <span>Reset</span>
               </button>
             )}
           </div>
-        )}
+        </div>
 
-        {/* Purchase History Table */}
-        {!loading && filteredHistory.length > 0 && (
-          <div className="table-responsive rounded-3 border" style={{ borderColor: "#E2E8F0" }}>
-            <table className="table table-hover align-middle mb-0">
-              <thead
-                style={{
-                  backgroundColor: "#F8FAFC",
-                  borderBottom: "2px solid #E2E8F0",
-                }}
-              >
-                <tr
-                  className="text-muted small text-uppercase fw-bold"
-                  style={{ fontSize: "11px", letterSpacing: "0.5px" }}
+        {/* ================================================================
+            PURCHASE HISTORY TABLE (With In-Table Loader & Empty State)
+        ================================================================= */}
+        <div className="overflow-x-auto mt-3">
+          <table
+            className="table table-hover align-middle border-separate border-spacing-0 w-full"
+            style={{ borderRadius: "10px", overflow: "hidden" }}
+          >
+            <thead>
+              <tr>
+                <th
+                  className="py-3 px-3 text-center text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", width: "45px" }}
                 >
-                  <th style={{ width: "45px" }} className="py-3 px-3 text-center">
-                    #
-                  </th>
-                  <th style={{ minWidth: "180px" }} className="py-3">
-                    <FontAwesomeIcon icon={faBox} className="me-1.5 text-muted" />
-                    Plan Name
-                  </th>
-                  <th style={{ minWidth: "170px" }} className="py-3">
-                    <FontAwesomeIcon icon={faUser} className="me-1.5 text-muted" />
-                    Subscriber
-                  </th>
-                  <th style={{ minWidth: "160px" }} className="py-3">
-                    <FontAwesomeIcon icon={faCreditCard} className="me-1.5 text-muted" />
-                    Payment Info
-                  </th>
-                  <th style={{ minWidth: "150px" }} className="py-3">
-                    <FontAwesomeIcon icon={faCalendarAlt} className="me-1.5 text-muted" />
-                    Purchased On
-                  </th>
-                  <th style={{ minWidth: "150px" }} className="py-3">
-                    <FontAwesomeIcon icon={faCalendarAlt} className="me-1.5 text-muted" />
-                    Expires On
-                  </th>
-                  <th style={{ minWidth: "130px" }} className="py-3 text-center">
-                    Txn Status
-                  </th>
-                  <th style={{ minWidth: "110px" }} className="py-3 text-center">
-                    Plan Status
-                  </th>
+                  #
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "180px" }}
+                >
+                  <FontAwesomeIcon icon={faBox} className="mr-1.5 text-amber-300" />
+                  Plan Name
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "170px" }}
+                >
+                  <FontAwesomeIcon icon={faUser} className="mr-1.5 text-amber-300" />
+                  Subscriber
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "160px" }}
+                >
+                  <FontAwesomeIcon icon={faCreditCard} className="mr-1.5 text-amber-300" />
+                  Payment Info
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "140px" }}
+                >
+                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-1.5 text-amber-300" />
+                  Purchased On
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "140px" }}
+                >
+                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-1.5 text-amber-300" />
+                  Expires On
+                </th>
+                <th
+                  className="py-3 px-3 text-center text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "110px" }}
+                >
+                  Txn Status
+                </th>
+                <th
+                  className="py-3 px-3 text-center text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "110px" }}
+                >
+                  Plan Status
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="text-center py-12">
+                    <div
+                      className="spinner-border text-danger"
+                      role="status"
+                      style={{ color: "#7A0E2E", width: "2.2rem", height: "2.2rem" }}
+                    >
+                      <span className="visually-hidden">Loading history...</span>
+                    </div>
+                    <p className="text-muted mt-2.5 text-xs font-semibold mb-0">
+                      Loading order history...
+                    </p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {paginatedHistory.map((plan, index) => {
-                  const rowNumber = (currentPage - 1) * itemsPerPage + index + 1;
-                  const isSuccessTxn = (plan.transaction_status || "").toLowerCase() === "success";
-                  const isActivePlan = (plan.plan_status || "").toLowerCase() === "active";
-                  const isExpiredPlan = (plan.plan_status || "").toLowerCase() === "expired";
+              ) : filteredHistory.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="text-center py-12">
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
+                      style={{
+                        width: "44px",
+                        height: "44px",
+                        backgroundColor: "rgba(122, 14, 46, 0.08)",
+                        color: "#7A0E2E",
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faReceipt} className="text-base" />
+                    </div>
+                    <h6 className="fw-bold text-gray-900 mb-1 text-sm">
+                      {purchaseHistory.length === 0
+                        ? "No Purchase History Found"
+                        : "No Matching Orders Found"}
+                    </h6>
+                    <p className="text-muted text-xs mb-3">
+                      {purchaseHistory.length === 0
+                        ? "Plan subscriptions purchased by users will be recorded here."
+                        : "Try adjusting your search query or status filter."}
+                    </p>
+                    {searchQuery || statusFilter !== "all" ? (
+                      <button
+                        onClick={() => {
+                          setSearchQuery("");
+                          setStatusFilter("all");
+                        }}
+                        className="btn btn-sm btn-outline-secondary px-3 py-1.5 rounded-lg text-xs font-semibold"
+                      >
+                        Clear Filters
+                      </button>
+                    ) : (
+                      <button
+                        onClick={fetchPurchaseHistory}
+                        className="btn btn-sm text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs"
+                        style={{ backgroundColor: "#7A0E2E" }}
+                      >
+                        <FontAwesomeIcon icon={faSyncAlt} className="me-1" />
+                        Reload
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                paginatedHistory.map((plan, index) => {
+                  const rowNumber = (currentPage - 1) * pageSize + index + 1;
+                  const isSuccessTxn =
+                    (plan.transaction_status || "").toLowerCase() === "success";
+                  const isActivePlan =
+                    (plan.plan_status || "").toLowerCase() === "active";
+                  const isExpiredPlan =
+                    (plan.plan_status || "").toLowerCase() === "expired";
                   const isCopied = copiedId === plan.transaction_id;
 
                   return (
                     <tr
                       key={plan._id || index}
-                      className="transition"
+                      className="hover:bg-rose-50/20 transition-colors"
                       style={{ borderBottom: "1px solid #F1F5F9" }}
                     >
-                      <td className="px-3 text-center text-muted fw-semibold small">
+                      <td className="px-3 text-center text-gray-500 font-semibold text-xs">
                         {rowNumber}
                       </td>
 
                       {/* Plan Name & Category */}
-                      <td className="py-3">
-                        <span className="fw-semibold text-dark d-block" style={{ fontSize: "13px" }}>
+                      <td className="py-3 px-3">
+                        <span className="font-bold text-gray-900 text-xs block">
                           {plan.plan_name || "Standard Plan"}
                         </span>
-                        <div className="d-flex flex-wrap gap-1 mt-1">
+                        <div className="flex flex-wrap gap-1 mt-1">
                           {plan.category_type && (
                             <span
-                              className="badge rounded-pill px-2 py-0.5 fw-semibold"
+                              className="badge rounded-pill px-2 py-0.5 font-semibold text-[10px]"
                               style={{
                                 backgroundColor: "rgba(166, 129, 57, 0.12)",
                                 color: "#85621e",
-                                fontSize: "10px",
                               }}
                             >
                               {plan.category_type}
@@ -502,21 +536,17 @@ const PlansPurchaseHistory = () => {
                           )}
                           {plan.user_type && (
                             <span
-                              className="badge rounded-pill px-2 py-0.5 fw-semibold"
+                              className="badge rounded-pill px-2 py-0.5 font-semibold text-[10px]"
                               style={{
                                 backgroundColor: "rgba(122, 14, 46, 0.08)",
                                 color: "#7A0E2E",
-                                fontSize: "10px",
                               }}
                             >
                               {plan.user_type}
                             </span>
                           )}
                           {plan.no_of_units ? (
-                            <span
-                              className="badge rounded-pill px-2 py-0.5 text-muted bg-light border"
-                              style={{ fontSize: "10px" }}
-                            >
+                            <span className="badge rounded-pill px-2 py-0.5 text-gray-500 bg-gray-50 border border-gray-200 text-[10px]">
                               {plan.no_of_units} units
                             </span>
                           ) : null}
@@ -524,21 +554,16 @@ const PlansPurchaseHistory = () => {
                       </td>
 
                       {/* Subscriber / User */}
-                      <td className="py-3">
-                        <div className="d-flex align-items-center">
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2">
                           <div
-                            className="rounded-circle d-flex align-items-center justify-content-center me-2 text-white fw-bold flex-shrink-0"
-                            style={{
-                              width: "32px",
-                              height: "32px",
-                              backgroundColor: "#7A0E2E",
-                              fontSize: "12px",
-                            }}
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[11px] flex-shrink-0 shadow-xs select-none"
+                            style={{ backgroundColor: "#7A0E2E" }}
                           >
                             {(plan.user_name || "U").charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <span className="fw-semibold text-dark d-block" style={{ fontSize: "13px" }}>
+                            <span className="font-bold text-gray-900 text-xs block">
                               {plan.user_name || "Subscriber"}
                             </span>
                           </div>
@@ -546,54 +571,58 @@ const PlansPurchaseHistory = () => {
                       </td>
 
                       {/* Payment Mode & Txn ID */}
-                      <td className="py-3">
-                        <div className="d-flex flex-column gap-1">
+                      <td className="py-3 px-3">
+                        <div className="flex flex-col gap-1 items-start">
                           <span
-                            className="badge rounded-pill px-2.5 py-1 fw-semibold align-self-start"
+                            className="badge rounded-pill px-2 py-0.5 font-semibold text-[11px]"
                             style={{
                               backgroundColor: "#F1F5F9",
                               color: "#334155",
                               border: "1px solid #CBD5E1",
-                              fontSize: "11px",
                             }}
                           >
-                            <FontAwesomeIcon icon={faCoins} className="me-1 text-muted" size="xs" />
+                            <FontAwesomeIcon icon={faCoins} className="me-1 text-gray-400 text-[10px]" />
                             {plan.payment_mode || "Online Gateway"}
                           </span>
 
                           {plan.transaction_id && (
                             <button
                               onClick={() => handleCopy(plan.transaction_id)}
-                              className="btn btn-link p-0 text-muted small text-decoration-none d-inline-flex align-items-center"
-                              style={{ fontSize: "11px" }}
-                              title="Click to copy Transaction ID"
+                              className="btn btn-link p-0 text-gray-500 hover:text-gray-800 text-[11px] text-decoration-none inline-flex items-center gap-1"
+                              title="Copy Transaction ID"
                             >
                               <FontAwesomeIcon
                                 icon={isCopied ? faCheck : faCopy}
-                                className={`me-1 ${isCopied ? "text-success" : ""}`}
+                                className={`text-[10px] ${isCopied ? "text-emerald-600" : ""}`}
                               />
-                              {isCopied ? "Copied" : `#${String(plan.transaction_id).slice(-8)}`}
+                              <span>
+                                {isCopied ? "Copied" : `#${String(plan.transaction_id).slice(-8)}`}
+                              </span>
                             </button>
                           )}
                         </div>
                       </td>
 
                       {/* Purchased Date */}
-                      <td className="py-3 text-muted small" style={{ fontSize: "12px" }}>
-                        <FontAwesomeIcon icon={faCalendarAlt} className="me-1 text-muted" size="xs" />
-                        {plan.plan_purchase_date || "—"}
+                      <td className="py-3 px-3 text-gray-500 text-xs">
+                        <div className="flex items-center gap-1">
+                          <FontAwesomeIcon icon={faCalendarAlt} className="text-[10px] text-gray-400" />
+                          <span>{plan.plan_purchase_date || "—"}</span>
+                        </div>
                       </td>
 
                       {/* Expiry Date */}
-                      <td className="py-3 text-muted small" style={{ fontSize: "12px" }}>
-                        <FontAwesomeIcon icon={faCalendarAlt} className="me-1 text-muted" size="xs" />
-                        {plan.plan_expiry_date || "—"}
+                      <td className="py-3 px-3 text-gray-500 text-xs">
+                        <div className="flex items-center gap-1">
+                          <FontAwesomeIcon icon={faCalendarAlt} className="text-[10px] text-gray-400" />
+                          <span>{plan.plan_expiry_date || "—"}</span>
+                        </div>
                       </td>
 
                       {/* Transaction Status */}
-                      <td className="py-3 text-center">
+                      <td className="py-3 px-3 text-center">
                         <span
-                          className="badge rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center"
+                          className="badge rounded-pill px-2.5 py-1 font-semibold inline-flex items-center gap-1"
                           style={{
                             backgroundColor: isSuccessTxn
                               ? "rgba(16, 185, 129, 0.12)"
@@ -604,16 +633,16 @@ const PlansPurchaseHistory = () => {
                         >
                           <FontAwesomeIcon
                             icon={isSuccessTxn ? faCheckCircle : faTimesCircle}
-                            className="me-1"
+                            className="text-[10px]"
                           />
-                          {plan.transaction_status || "Success"}
+                          <span>{plan.transaction_status || "Success"}</span>
                         </span>
                       </td>
 
                       {/* Plan Status */}
-                      <td className="py-3 text-center">
+                      <td className="py-3 px-3 text-center">
                         <span
-                          className="badge rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center"
+                          className="badge rounded-pill px-2.5 py-1 font-semibold inline-flex items-center gap-1"
                           style={{
                             backgroundColor: isActivePlan
                               ? "rgba(16, 185, 129, 0.12)"
@@ -630,74 +659,125 @@ const PlansPurchaseHistory = () => {
                         >
                           <FontAwesomeIcon
                             icon={isActivePlan ? faCheckCircle : faTimesCircle}
-                            className="me-1"
+                            className="text-[10px]"
                           />
-                          {plan.plan_status || "Active"}
+                          <span>{plan.plan_status || "Active"}</span>
                         </span>
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Pagination Section */}
-        {!loading && totalPages > 1 && (
-          <div className="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3 border-top">
-            <span className="text-muted small">
+        {/* ================================================================
+            PAGINATION SECTION
+        ================================================================= */}
+        {!loading && filteredHistory.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 mt-3 border-t border-gray-100 text-xs text-gray-500">
+            <div>
               Showing{" "}
-              <strong>
-                {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                {Math.min(currentPage * itemsPerPage, filteredHistory.length)}
+              <strong className="text-gray-900">
+                {(currentPage - 1) * pageSize + 1}
               </strong>{" "}
-              of <strong>{filteredHistory.length}</strong> orders
-            </span>
+              to{" "}
+              <strong className="text-gray-900">
+                {Math.min(currentPage * pageSize, filteredHistory.length)}
+              </strong>{" "}
+              of <strong className="text-gray-900">{filteredHistory.length}</strong> orders
+            </div>
 
-            <nav aria-label="Purchase history pagination">
-              <ul className="pagination pagination-sm mb-0 gap-1">
-                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                  <button
-                    className="page-link rounded-pill px-3"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                  >
-                    Previous
-                  </button>
-                </li>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <li
-                    key={page}
-                    className={`page-item ${currentPage === page ? "active" : ""}`}
-                  >
+            <div className="flex items-center gap-2">
+              <nav aria-label="Purchase history pagination">
+                <ul className="pagination pagination-sm mb-0 gap-1 align-items-center flex-wrap">
+                  {/* First */}
+                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
                     <button
-                      className="page-link rounded-circle d-flex align-items-center justify-content-center"
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        backgroundColor: currentPage === page ? "#7A0E2E" : undefined,
-                        borderColor: currentPage === page ? "#7A0E2E" : undefined,
-                      }}
-                      onClick={() => handlePageChange(page)}
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      title="First Page"
                     >
-                      {page}
+                      « First
                     </button>
                   </li>
-                ))}
-                <li
-                  className={`page-item ${
-                    currentPage === totalPages ? "disabled" : ""
-                  }`}
-                >
-                  <button
-                    className="page-link rounded-pill px-3"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                  >
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav>
+
+                  {/* Prev */}
+                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      title="Previous Page"
+                    >
+                      ‹ Prev
+                    </button>
+                  </li>
+
+                  {/* Numbered Page Buttons */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => {
+                      return (
+                        p === 1 ||
+                        p === totalPages ||
+                        Math.abs(p - currentPage) <= 2
+                      );
+                    })
+                    .map((pageNum, idx, arr) => {
+                      const prev = arr[idx - 1];
+                      const isActive = currentPage === pageNum;
+                      return (
+                        <React.Fragment key={pageNum}>
+                          {prev && pageNum - prev > 1 && (
+                            <li className="page-item disabled px-1 text-muted small">...</li>
+                          )}
+                          <li className={`page-item ${isActive ? "active" : ""}`}>
+                            <button
+                              className="page-link rounded-2 fw-bold text-xs d-flex align-items-center justify-content-center shadow-xs"
+                              style={{
+                                minWidth: "30px",
+                                height: "30px",
+                                backgroundColor: isActive ? "#7A0E2E" : undefined,
+                                borderColor: isActive ? "#7A0E2E" : undefined,
+                                color: isActive ? "#FFFFFF" : undefined,
+                              }}
+                              onClick={() => setCurrentPage(pageNum)}
+                            >
+                              {pageNum}
+                            </button>
+                          </li>
+                        </React.Fragment>
+                      );
+                    })}
+
+                  {/* Next */}
+                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      title="Next Page"
+                    >
+                      Next ›
+                    </button>
+                  </li>
+
+                  {/* Last */}
+                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      title="Last Page"
+                    >
+                      Last »
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
           </div>
         )}
       </div>

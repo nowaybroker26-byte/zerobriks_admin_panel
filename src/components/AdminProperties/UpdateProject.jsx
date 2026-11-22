@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { IoIosInformationCircle } from "react-icons/io";
-import { Plus } from "lucide-react"; // Using Lucide Icons for delete button
+import { Plus, FolderKanban, ArrowLeft, ArrowRight, Check } from "lucide-react"; // Using Lucide Icons
 import { MdOutlineDriveFolderUpload } from "react-icons/md";
 import axios from "axios";
 import { Trash } from "@phosphor-icons/react";
@@ -1134,58 +1134,108 @@ setDescription(data.project_description || "");
 
 
     return (
-        <>
-            <div className="w-100 container-fluid mt-28">
-                <nav className="flex justify-end mb-4" aria-label="Breadcrumb">
-                        <ol className="flex flex-wrap items-center space-x-2 text-sm md:space-x-4">
-                          <li>
-                            <Link
-                              to="/projects"
-                              className="font-medium text-blue-600 transition-colors hover:underline"
-                            >
-                              Go To Projects
-                            </Link>
-                          </li>
-                
-                
-                          <li className="text-gray-400">/</li>
-                        </ol>
-                      </nav>
-                <div className="flex flex-col items-center min-h-screen bg-white">
-                    {/* Navbar */}
-                    <nav className="items-center justify-center hidden w-full p-4 text-black bg-gray-200 md:flex">
-                        <h1 className="text-xl">Edit Project</h1>
+        <div className="w-full min-h-screen bg-gray-50/60 pb-28 pt-4">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                {/* Breadcrumb & Navigation */}
+                <div className="flex items-center justify-between mb-4">
+                    <nav className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                        <Link to="/projects" className="hover:text-[#7A0E2E] transition-colors">
+                            Projects
+                        </Link>
+                        <span>/</span>
+                        <span className="text-gray-900 font-semibold">Edit Project</span>
                     </nav>
+                    <button
+                        type="button"
+                        onClick={() => navigate("/projects")}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-all"
+                    >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        Back to Projects
+                    </button>
+                </div>
 
-                    {/* Stepper Navigation */}
-                    <div className="flex justify-center p-3 space-x-4 bg-white">
-                        {steps.map((step, index) => (
-                            <button
-                                key={index}
-                                className={`px-4 py-3 rounded-full text-sm font-medium transition ${activeStep === index
-                                    ? "bg-gray-200 text-purple-600"
-                                    : "text-gray-600 "
-                                    }`}
-                                onClick={() => setActiveStep(index)}
-                            >
-                                {index + 1}. {step}
-                            </button>
-                        ))}
+                {/* Header Card */}
+                <div className="bg-white border border-gray-200/90 rounded-2xl p-5 sm:p-6 shadow-sm mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-xl bg-[#7A0E2E]/10 flex items-center justify-center text-[#7A0E2E] shrink-0">
+                            <FolderKanban className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                                    {formData?.project_name || projectName || "Edit Project"}
+                                </h1>
+                                {id && (
+                                    <span className="font-mono text-xs bg-gray-100 text-gray-700 px-2.5 py-0.5 rounded-full border border-gray-200">
+                                        ID: {id?.slice(-8).toUpperCase()}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                                Update project specs, configurations, towers, amenities, and branding assets.
+                            </p>
+                        </div>
                     </div>
+                    {propertyType && (
+                        <div className="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200/70 self-start sm:self-auto">
+                            <span>Type:</span>
+                            <span className="font-semibold text-gray-900">{propertyType}</span>
+                        </div>
+                    )}
+                </div>
 
-                    {/* Form Card */}
-                    <div className="w-full max-w-full p-6 bg-white">
-                        {/* <h2 className="mb-4 text-lg font-semibold text-gray-900">
-            {steps[activeStep]}
-          </h2> */}
+                {/* Stepper Bar */}
+                <div className="bg-white border border-gray-200/90 rounded-2xl p-2 sm:p-3 shadow-sm mb-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        {steps.map((step, index) => {
+                            const isCurrent = activeStep === index;
+                            const isCompleted = activeStep > index;
+                            return (
+                                <button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => setActiveStep(index)}
+                                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all text-left ${
+                                        isCurrent
+                                            ? "bg-[#7A0E2E] text-white shadow-sm"
+                                            : isCompleted
+                                            ? "bg-[#7A0E2E]/10 text-[#7A0E2E] hover:bg-[#7A0E2E]/15"
+                                            : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200/60"
+                                    }`}
+                                >
+                                    <span
+                                        className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                                            isCurrent
+                                                ? "bg-white text-[#7A0E2E]"
+                                                : isCompleted
+                                                ? "bg-[#7A0E2E] text-white"
+                                                : "bg-gray-200 text-gray-600"
+                                        }`}
+                                    >
+                                        {isCompleted ? <Check className="w-3 h-3 stroke-[3]" /> : index + 1}
+                                    </span>
+                                    <span className="truncate">{step}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
 
-                        {/* Render Step Content */}
-                   {activeStep === 0 && (
-            <>
-              <div className="max-w-3xl p-3 mx-auto mb-20 border border-gray-300 rounded-xl">
-                <h2 className="mb-4 text-xl font-semibold text-gray-800">
-                  Basic Details
-                </h2>
+                {/* Step Card Container */}
+                <div className="bg-white border border-gray-200/90 rounded-2xl shadow-sm p-6 sm:p-8">
+                    {/* Render Step Content */}
+                    {activeStep === 0 && (
+                        <div className="max-w-4xl mx-auto">
+                            <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900">Basic Information</h2>
+                                    <p className="text-xs text-gray-500 mt-0.5">Specify project name, builder/developer, and core categories</p>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                                    Step 1 of {steps.length}
+                                </span>
+                            </div>
 
                 {/* Property Name */}
                 <div className="mb-4">
@@ -1582,17 +1632,20 @@ setDescription(data.project_description || "");
                   </div>
                 )}
               </div>
-            </>
           )}
 
           {activeStep === 1 && (
-            <>
-              <div className="max-w-5xl mx-auto mb-32 bg-white rounded-xl">
-                <h2 className="text-2xl text-gray-900">Project Address</h2>
-                <p className="mt-1 text-gray-500">
-                  Place the listing pin on the map
-                </p>
-                <div className="grid grid-cols-1 gap-6 mt-6 md:grid-cols-2">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Project Address & Location</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Specify street address, area, city, and geographical coordinates</p>
+                </div>
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                  Step 2 of {steps.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-6 mt-6 md:grid-cols-2">
                   {/* <div className="w-full overflow-hidden bg-gray-200 rounded-lg h-80">
                              <LoadScript
                                googleMapsApiKey={GOOGLE_MAPS_API_KEY}
@@ -1794,20 +1847,25 @@ setDescription(data.project_description || "");
                   </div>
                 </div>
               </div>
-            </>
           )}
-         {activeStep === 2 && (
-                     <>
-                       <div className="p-3 mx-auto mb-3 bg-white border max-w-7xl rounded-xl">
-                         <div className="mb-6">
-                           <h2 className="text-2xl font-semibold text-gray-900">
-                             Project Details
-                           </h2>
-                           <p className="text-gray-500">
-                             Enter and manage essential information related to your
-                             project Properties.
-                           </p>
-                         </div>
+          {activeStep === 2 && (
+            <div className="max-w-5xl mx-auto space-y-6">
+              <div className="flex items-center justify-between pb-4 mb-2 border-b border-gray-100">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Project Details & Configurations</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Enter pricing, area ranges, towers, units, and structural specifications</p>
+                </div>
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                  Step 3 of {steps.length}
+                </span>
+              </div>
+
+              {/* Card 1: Pricing */}
+              <div className="bg-gray-50/50 border border-gray-200/80 rounded-xl p-5">
+                <div className="mb-4">
+                  <h3 className="text-base font-bold text-gray-900">Pricing & Core Figures</h3>
+                  <p className="text-xs text-gray-500">Core financial and project pricing details</p>
+                </div>
          
                          <div className="grid items-start grid-cols-6 gap-4 p-4 mt-4 rounded-lg">
                            {/* Property Price */}
@@ -2142,17 +2200,11 @@ setDescription(data.project_description || "");
                          </div>
                        </div>
          
-                       <div className="p-3 mx-auto mb-3 bg-white border max-w-7xl rounded-xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                         {/*  Header full width */}
-                         <div className="mb-6 col-span-1 md:col-span-2 lg:col-span-4">
-                           <h2 className="text-2xl font-semibold text-gray-900">
-                             More Details
-                           </h2>
-                           <p className="text-gray-500">
-                             Comprehensive overview covering scale, financials, features,
-                             timeline, and compliance of the project
-                           </p>
-                         </div>
+                       <div className="bg-gray-50/50 border border-gray-200/80 rounded-xl p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="mb-4 col-span-1 md:col-span-2 lg:col-span-4">
+                  <h3 className="text-base font-bold text-gray-900">More Details & Specifications</h3>
+                  <p className="text-xs text-gray-500">Comprehensive overview covering scale, financials, features, and timeline</p>
+                </div>
          
                          {/* {buildingType === "Commercial" &&
                            !["Land", "Plot/Land"].includes(propertyType) && (
@@ -3398,18 +3450,11 @@ setDescription(data.project_description || "");
                            )}
                        </div>
          
-                       <div className="p-3 mx-auto mb-16 bg-white border max-w-7xl rounded-xl">
-                         {/* Header Section */}
-                         <div className="mb-6">
-                           <h2 className="text-2xl font-semibold text-gray-900">
-                             Project Info
-                           </h2>
-                           <p className="text-gray-500">
-                             Details about the project, including an overview and
-                             description that provides insight into the project's
-                             purpose, goals, and unique aspects.
-                           </p>
-                         </div>
+                       <div className="bg-gray-50/50 border border-gray-200/80 rounded-xl p-5">
+                <div className="mb-4">
+                  <h3 className="text-base font-bold text-gray-900">Project Description & Overview</h3>
+                  <p className="text-xs text-gray-500">Details about the project, including an overview and key highlights for buyers</p>
+                </div>
          
                          {/* Form Grid */}
                          <div className="grid grid-cols-1 sm:grid-cols-[2.9fr_1fr]">
@@ -3442,22 +3487,20 @@ setDescription(data.project_description || "");
                            </div>
                          </div>
                        </div>
-                     </>
-                   )}
+                                             </div>
+                    )}
 
-
-                        {activeStep === 3 && (
-                            <>
-                                <div className="max-w-5xl mx-auto bg-white rounded-xl">
-                                    {/* Title & Subtitle */}
-                                    <div>
-                                        <h2 className="text-2xl text-gray-900">Amenities</h2>
-                                        <p className="mt-1 text-gray-500">
-                                            This section allows users to select available amenities for
-                                            the project, with dynamically updated checkboxes to
-                                            represent selected features.
-                                        </p>
-                                    </div>
+                    {activeStep === 3 && (
+                        <div className="max-w-4xl mx-auto">
+                            <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900">Amenities & Lifestyle Features</h2>
+                                    <p className="text-xs text-gray-500 mt-0.5">Select all facilities and clubhouse amenities available in this project</p>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                                    Step 4 of {steps.length}
+                                </span>
+                            </div>
 
                                     {/* Amenities List */}
                                     <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-3">
@@ -3484,13 +3527,20 @@ setDescription(data.project_description || "");
                                             </label>
                                         ))}
                                     </div>
-                                </div>
-                            </>
-                        )}
+                        </div>
+                    )}
 
-                        {activeStep === 4 && (
-                            <>
-                                <div className="max-w-5xl p-6 pt-0 mx-auto">
+                    {activeStep === 4 && (
+                        <div className="max-w-4xl mx-auto">
+                            <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900">Photos, Brochures & Media Assets</h2>
+                                    <p className="text-xs text-gray-500 mt-0.5">Upload project logo, gallery images, floor plans, and brochures</p>
+                                </div>
+                                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                                    Step 5 of {steps.length}
+                                </span>
+                            </div>
                                     {/* Logo Upload Section */}
                                     <div
                                         className="p-6 mb-6 bg-white border border-gray-200 rounded-xl"
@@ -3891,46 +3941,60 @@ setDescription(data.project_description || "");
 
                                         </div>
                                     </div>
-                                </div>
-                            </>
-                        )}
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                        {/* Navigation Buttons - Fixed at Bottom */}
-                        <div
-                            className={`fixed bottom-0 left-40 right-0 bg-white p-4 shadow-md flex mx-32 ${activeStep === 0 ? "justify-end" : "justify-between"
-                                }`}
-                        >            {activeStep > 0 && (
+            {/* Navigation Buttons - Fixed at Bottom */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg px-4 sm:px-8 py-3">
+                <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+                    <div>
+                        {activeStep > 0 ? (
                             <button
+                                type="button"
                                 onClick={prevStep}
-                                className="px-5 py-2 text-gray-700 bg-gray-300 rounded-lg hover:bg-gray-400"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
                             >
-                                Back
+                                <ArrowLeft className="w-4 h-4" />
+                                Previous Step
+                            </button>
+                        ) : (
+                            <span className="text-xs text-gray-400 font-medium">Step 1: Basic Information</span>
+                        )}
+                    </div>
+
+                    <div className="text-xs text-gray-500 font-medium hidden sm:block">
+                        Step <span className="font-bold text-gray-900">{activeStep + 1}</span> of {steps.length} — {steps[activeStep]}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {activeStep < steps.length - 1 ? (
+                            <button
+                                type="button"
+                                onClick={handleNext}
+                                className="inline-flex items-center gap-1.5 px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-[#7A0E2E] hover:bg-[#600b24] rounded-xl transition-all shadow-sm active:scale-95"
+                            >
+                                Continue
+                                <ArrowRight className="w-4 h-4" />
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleEditProject}
+                                disabled={isSubmitting}
+                                className={`inline-flex items-center gap-1.5 px-6 py-2 text-xs sm:text-sm font-semibold text-white rounded-xl transition-all shadow-sm ${
+                                    isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 active:scale-95"
+                                }`}
+                            >
+                                {isSubmitting ? "Updating..." : "Save & Update Project"}
                             </button>
                         )}
-                            {activeStep < steps.length - 1 ? (
-                                <button
-                                    type="button"
-                                    onClick={handleNext}
-                                    className="px-5 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700"
-                                >
-                                    Continue
-                                </button>
-                            ) : (
-                                // isModified && (
-                                <button
-                                    onClick={handleEditProject}
-                                    disabled={isSubmitting}
-                                    className={`mt-4 px-4 py-2 rounded ${isSubmitting ? "bg-gray-400" : "bg-green-600 hover:bg-purple-700"} text-white`}
-                                >
-                                    {isSubmitting ? "Submitting..." : "Submit"}
-                                </button>
-                                // )
-                            )}
-                        </div>
                     </div>
-                </div >
+                </div>
             </div>
-        </>
+        </div>
     );
 };
+
 export default UpdateProject;

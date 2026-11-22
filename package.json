@@ -64,7 +64,8 @@
     "slick-carousel": "^1.8.1",
     "sweetalert2": "^11.22.2",
     "uuid": "^8.3.2",
-    "web-vitals": "^1.1.2"
+    "web-vitals": "^1.1.2",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",

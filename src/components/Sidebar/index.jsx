@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
   Home,
   Building2,
   FolderKanban,
-  CheckSquare,
   Users,
-  UserCheck,
-  User,
   Bed,
   Globe,
   Bell,
@@ -28,9 +26,9 @@ import {
   Search,
   Calendar,
   ChevronDown,
-  Sliders,
   Video,
   Megaphone,
+  X,
 } from "lucide-react";
 import { FaUserCircle } from "react-icons/fa";
 import axios from "axios";
@@ -59,23 +57,16 @@ const SIDEBAR_SECTIONS = [
     section: "PROPERTY MANAGEMENT",
     items: [
       {
-        name: "Properties",
+        name: "Property Directory",
         icon: Building2,
         href: "/properties",
         moduleKey: "myInventory",
       },
       {
-        name: "Projects",
+        name: "Builder Projects",
         icon: FolderKanban,
         href: "/projects",
         moduleKey: "projects",
-      },
-      {
-        name: "Smart Approval",
-        icon: CheckSquare,
-        href: "/recent-properties",
-        moduleKey: "myInventory",
-        badge: "12",
       },
     ],
   },
@@ -83,21 +74,9 @@ const SIDEBAR_SECTIONS = [
     section: "USERS MANAGEMENT",
     items: [
       {
-        name: "Owners",
-        icon: UserCheck,
-        href: "/user-type/Owner",
-        moduleKey: "users",
-      },
-      {
-        name: "Buyers",
-        icon: User,
-        href: "/user-type/Buyer",
-        moduleKey: "users",
-      },
-      {
-        name: "Tenants",
+        name: "All Users",
         icon: Users,
-        href: "/user-type/Tenant",
+        href: "/customers",
         moduleKey: "users",
       },
       {
@@ -105,24 +84,16 @@ const SIDEBAR_SECTIONS = [
         icon: Bed,
         href: "/user-type/PG",
         moduleKey: "users",
-      },
-      {
-        name: "Builders",
-        icon: Building2,
-        href: "/developers",
-        moduleKey: "users",
+        comingSoon: true,
+        badge: "Soon",
       },
       {
         name: "NRI Clients",
         icon: Globe,
         href: "/customers",
         moduleKey: "users",
-      },
-      {
-        name: "All Users",
-        icon: Users,
-        href: "/customers",
-        moduleKey: "users",
+        comingSoon: true,
+        badge: "Soon",
       },
     ],
   },
@@ -143,7 +114,7 @@ const SIDEBAR_SECTIONS = [
         moduleKey: "inquiries",
       },
       {
-        name: "Messages",
+        name: "Feedback",
         icon: MessageSquare,
         href: "/feedbacks",
         moduleKey: "feedback",
@@ -178,8 +149,10 @@ const SIDEBAR_SECTIONS = [
       {
         name: "Reports",
         icon: FileBarChart,
-        href: "/admin",
+        href: "/reports",
         moduleKey: "admin",
+        comingSoon: true,
+        badge: "Soon",
       },
       {
         name: "Revenue",
@@ -190,14 +163,18 @@ const SIDEBAR_SECTIONS = [
       {
         name: "City Analytics",
         icon: MapPin,
-        href: "/admin",
+        href: "/city-analytics",
         moduleKey: "admin",
+        comingSoon: true,
+        badge: "Soon",
       },
       {
         name: "User Activity",
         icon: Activity,
-        href: "/customers",
+        href: "/user-activity",
         moduleKey: "users",
+        comingSoon: true,
+        badge: "Soon",
       },
       {
         name: "Plan Subscriptions",
@@ -211,20 +188,9 @@ const SIDEBAR_SECTIONS = [
     section: "SETTINGS",
     items: [
       {
-        name: "Website Settings",
-        icon: Sliders,
-        href: "/hero-sliders",
-      },
-      {
         name: "App Settings",
         icon: Smartphone,
         href: "/admin-settings",
-        moduleKey: "setting",
-      },
-      {
-        name: "Manage Cities",
-        icon: MapPin,
-        href: "/admin-settings/general-setting",
         moduleKey: "setting",
       },
       {
@@ -254,15 +220,18 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const { can, currentRole } = useContext(MyContext) || { can: () => true };
 
   const isActive = (path, name) => {
-    if (name === "Dashboard" && location.pathname === "/admin") return true;
-    if (name === "All Users" && location.pathname === "/customers") return true;
+    if (name === "Dashboard" && (location.pathname === "/admin" || location.pathname === "/admin/admin")) return true;
+    if (name === "All Users" && (location.pathname === "/customers" || location.pathname === "/admin/customers")) return true;
+    if (name === "Owners" && (location.pathname === "/user-type/Owner" || location.pathname === "/admin/user-type/Owner")) return true;
+    if (name === "Buyer / Tenant" && (location.pathname === "/user-type/Buyer" || location.pathname === "/admin/user-type/Buyer")) return true;
+    if (name === "Builders" && (location.pathname === "/developers" || location.pathname === "/admin/developers")) return true;
     if (
       ["Reports", "City Analytics", "NRI Clients", "User Activity"].includes(name)
     ) {
       return false;
     }
     if (
-      (name === "Advertising" || name === "Website Settings") &&
+      name === "Advertising" &&
       [
         "/hero-sliders",
         "/sliders",
@@ -358,8 +327,28 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                       return (
                         <Link
                           key={item.name}
-                          to={item.href}
-                          onClick={() => {
+                          to={item.comingSoon ? "#" : item.href}
+                          onClick={(e) => {
+                            if (item.comingSoon) {
+                              e.preventDefault();
+                              Swal.fire({
+                                title: `<div style="display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:14px; background:rgba(122,14,46,0.08); margin:0 auto 12px; color:#7A0E2E;">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                </div><span style="font-size:18px; font-weight:700; color:#1E293B;">Coming Soon</span>`,
+                                html: `<p style="font-size:13.5px; color:#475569; margin:0 0 6px;"><strong>${item.name}</strong> is currently under active development.</p><p style="font-size:12px; color:#94A3B8; margin:0;">This feature will be available in the upcoming release.</p>`,
+                                showConfirmButton: true,
+                                confirmButtonText: "Got it",
+                                confirmButtonColor: "#7A0E2E",
+                                background: "#FFFFFF",
+                                width: "380px",
+                                padding: "24px 20px 20px",
+                                customClass: {
+                                  popup: "rounded-2xl shadow-2xl border border-slate-100",
+                                  confirmButton: "rounded-xl px-5 py-2 text-xs font-semibold shadow-xs",
+                                },
+                              });
+                              return;
+                            }
                             if (
                               typeof window !== "undefined" &&
                               window.innerWidth < 768
@@ -380,7 +369,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                                 }
                               : {}
                           }
-                          title={!isSidebarOpen ? item.name : ""}
+                          title={!isSidebarOpen ? (item.comingSoon ? `${item.name} (Coming Soon)` : item.name) : ""}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             <div className="relative flex-shrink-0">
@@ -402,7 +391,14 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                           </div>
 
                           {isSidebarOpen && item.badge && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-red-600 text-white leading-none">
+                            <span
+                              className="px-1.5 py-0.5 text-[9px] font-bold rounded-full text-white leading-none shadow-xs"
+                              style={{
+                                backgroundColor: item.comingSoon
+                                  ? "rgba(217, 155, 38, 0.95)"
+                                  : "#DC2626",
+                              }}
+                            >
                               {item.badge}
                             </span>
                           )}
@@ -458,7 +454,123 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentRole, setIsAuthenticated } = useContext(MyContext) || {};
+  const { currentRole, setIsAuthenticated, dashboardDateRange, setDashboardDateRange } =
+    useContext(MyContext) || {};
+
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [customStart, setCustomStart] = useState(
+    dashboardDateRange?.startDate || ""
+  );
+  const [customEnd, setCustomEnd] = useState(
+    dashboardDateRange?.endDate || ""
+  );
+  const datePickerRef = useRef(null);
+
+  const DATE_PRESETS = [
+    {
+      id: "all_time",
+      name: "All Time (Overall Data)",
+      start: "",
+      end: "",
+      label: "All Time (Overall Data)",
+    },
+    {
+      id: "this_month",
+      name: "This Month (Nov 2026)",
+      start: "2026-11-01",
+      end: "2026-11-30",
+      label: "01 Nov 2026 – 30 Nov 2026",
+    },
+    {
+      id: "last_30_days",
+      name: "Last 30 Days",
+      start: "2026-10-21",
+      end: "2026-11-20",
+      label: "21 Oct 2026 – 20 Nov 2026",
+    },
+    {
+      id: "last_6_months",
+      name: "Last 6 Months (01 Apr – 30 Sep 2026)",
+      start: "2026-04-01",
+      end: "2026-09-30",
+      label: "01 Apr 2026 – 30 Sep 2026",
+    },
+    {
+      id: "last_year",
+      name: "Last 1 Year (Nov 2025 – Nov 2026)",
+      start: "2025-11-01",
+      end: "2026-11-20",
+      label: "01 Nov 2025 – 20 Nov 2026",
+    },
+  ];
+
+  const formatDateDisplay = (dateStr) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr + "T00:00:00");
+    if (isNaN(d.getTime())) return dateStr;
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = d.toLocaleString("en-US", { month: "short" });
+    const year = d.getFullYear();
+    return `${day} ${month} ${year}`;
+  };
+
+  const formatRangeLabel = (start, end) => {
+    if (!start && !end) return "All Time (Overall Data)";
+    if (start && end) return `${formatDateDisplay(start)} – ${formatDateDisplay(end)}`;
+    if (start) return `From ${formatDateDisplay(start)}`;
+    return `Until ${formatDateDisplay(end)}`;
+  };
+
+  const handleSelectPreset = (preset) => {
+    if (setDashboardDateRange) {
+      setDashboardDateRange({
+        startDate: preset.start,
+        endDate: preset.end,
+        label: preset.label,
+        preset: preset.id,
+      });
+    }
+    setCustomStart(preset.start);
+    setCustomEnd(preset.end);
+    setIsDatePickerOpen(false);
+  };
+
+  const handleApplyCustomRange = (e) => {
+    if (e) e.preventDefault();
+    if (!customStart && !customEnd) return;
+    const label = formatRangeLabel(customStart, customEnd);
+    if (setDashboardDateRange) {
+      setDashboardDateRange({
+        startDate: customStart,
+        endDate: customEnd,
+        label: label,
+        preset: "custom",
+      });
+    }
+    setIsDatePickerOpen(false);
+  };
+
+  const handleResetToAllTime = (e) => {
+    if (e) e.stopPropagation();
+    if (setDashboardDateRange) {
+      setDashboardDateRange({
+        startDate: "",
+        endDate: "",
+        label: "All Time (Overall Data)",
+        preset: "all_time",
+      });
+    }
+    setCustomStart("");
+    setCustomEnd("");
+    setIsDatePickerOpen(false);
+  };
+
+  const hasFilterSelected =
+    Boolean(dashboardDateRange?.preset) &&
+    dashboardDateRange?.preset !== "all_time" &&
+    (Boolean(dashboardDateRange?.startDate) ||
+      Boolean(dashboardDateRange?.endDate) ||
+      dashboardDateRange?.preset !== "all_time");
 
   const toggleUserMenu = () => setIsUserMenuOpen((prev) => !prev);
 
@@ -514,7 +626,7 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
     setSearchResults(matches);
   }, [globalSearch, allCachedUsers]);
 
-  // Close search dropdown on outside click
+  // Close search dropdown and date picker on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
@@ -522,6 +634,12 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
         !searchContainerRef.current.contains(e.target)
       ) {
         setIsSearchOpen(false);
+      }
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(e.target)
+      ) {
+        setIsDatePickerOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -627,7 +745,8 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
     }
   };
 
-  const isDashboard = location.pathname === "/admin";
+  const isDashboard =
+    location.pathname === "/admin" || location.pathname === "/admin/admin";
 
   return (
     <header
@@ -645,68 +764,160 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
           <Menu size={20} />
         </button>
 
-        {isDashboard ? (
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight m-0 leading-tight">
-              Admin Dashboard
-            </h1>
-            <p className="text-[11px] text-gray-500 m-0 hidden lg:block truncate">
-              Complete overview of your platform performance, users, properties and business growth.
-            </p>
-          </div>
-        ) : (
-          <div className="relative w-64 sm:w-96 lg:w-[440px]">
-            <Search
-              size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              value={globalSearch}
-              onFocus={() => setIsSearchOpen(true)}
-              onChange={(e) => {
-                setGlobalSearch(e.target.value);
-                setIsSearchOpen(true);
-              }}
-              onKeyDown={handleSearchKeyDown}
-              placeholder="Search by Customer ID (e.g. ZB-CU-2B379E), Name, Mobile, Email, City..."
-              className="w-full pl-9 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#7A0E2E]"
-            />
-            {renderSearchDropdown()}
-          </div>
-        )}
+        <div className="relative w-64 sm:w-96 lg:w-[440px]">
+          <Search
+            size={15}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            type="text"
+            value={globalSearch}
+            onFocus={() => setIsSearchOpen(true)}
+            onChange={(e) => {
+              setGlobalSearch(e.target.value);
+              setIsSearchOpen(true);
+            }}
+            onKeyDown={handleSearchKeyDown}
+            placeholder="Search by Customer ID (e.g. ZB-CU-2B379E), Name, Mobile, Email, City..."
+            className="w-full pl-9 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#7A0E2E]"
+          />
+          {renderSearchDropdown()}
+        </div>
       </div>
 
-      {/* Right Controls: Search (on dashboard), Date/City selector, Bell, Profile */}
+      {/* Right Controls: Date Range (on dashboard), Bell, Profile */}
       <div className="flex items-center gap-2.5 sm:gap-3">
         {isDashboard ? (
-          <>
-            <div className="relative hidden xl:block w-80">
-              <Search
-                size={14}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-              />
-              <input
-                type="text"
-                value={globalSearch}
-                onFocus={() => setIsSearchOpen(true)}
-                onChange={(e) => {
-                  setGlobalSearch(e.target.value);
-                  setIsSearchOpen(true);
-                }}
-                onKeyDown={handleSearchKeyDown}
-                placeholder="Search by ID (ZB-CU-2B379E), name, mobile, city..."
-                className="w-full pl-9 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#7A0E2E]"
-              />
-              {renderSearchDropdown()}
-            </div>
+          <div className="relative" ref={datePickerRef}>
+            <button
+              type="button"
+              onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 cursor-pointer hover:border-gray-300 shadow-xs transition-all active:scale-95 group"
+              title="Filter Dashboard by Date Range"
+            >
+              <Calendar size={14} className="text-amber-600 flex-shrink-0" />
+              <span className="font-bold text-gray-800">
+                {dashboardDateRange?.label || "All Time (Overall Data)"}
+              </span>
 
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 cursor-pointer hover:border-gray-300">
-              <Calendar size={14} className="text-amber-600" />
-              <span>01 Apr 2026 – 30 Sep 2026</span>
-              <ChevronDown size={13} className="text-gray-400" />
+              {hasFilterSelected && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={handleResetToAllTime}
+                  className="p-0.5 rounded-full hover:bg-rose-100 text-gray-400 hover:text-[#7A0E2E] transition-colors ml-0.5 flex items-center justify-center"
+                  title="Clear filter & show All Time (Overall Data)"
+                >
+                  <X size={13} strokeWidth={2.5} />
+                </span>
+              )}
+
+              <ChevronDown
+                size={13}
+                className={`text-gray-400 transition-transform duration-200 ${
+                  isDatePickerOpen ? "rotate-180 text-[#7A0E2E]" : ""
+                }`}
+              />
+            </button>
+
+            {/* Date Filter Dropdown Popover */}
+            {isDatePickerOpen && (
+              <div
+                className="absolute right-0 top-11 bg-white rounded-2xl shadow-2xl border border-gray-200 p-3.5 z-50 w-72 sm:w-80 text-left animate-in fade-in zoom-in-95 duration-150"
+                style={{ minWidth: "290px" }}
+              >
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-100">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-gray-500">
+                    Filter Dashboard By Date
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleResetToAllTime}
+                    className="text-[10px] font-bold text-[#7A0E2E] hover:underline flex items-center gap-1"
+                  >
+                    <X size={11} />
+                    Reset to All Time
+                  </button>
+                  </div>
+
+                  {/* Presets */}
+                  <div className="space-y-1 mb-3">
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                      Quick Presets
+                    </div>
+                    {DATE_PRESETS.map((p) => {
+                      const isSelected =
+                        dashboardDateRange?.label === p.label ||
+                        dashboardDateRange?.preset === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => handleSelectPreset(p)}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-between ${
+                            isSelected
+                              ? "bg-rose-50 text-[#7A0E2E] font-bold border border-[#7A0E2E]/20"
+                              : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <span>{p.name}</span>
+                          {isSelected && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#7A0E2E]" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Custom Range */}
+                  <div className="pt-2 border-t border-gray-100">
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Custom Date Range
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mb-2.5">
+                      <div>
+                        <label className="text-[10px] text-gray-500 font-semibold block mb-0.5">
+                          From Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customStart}
+                          onChange={(e) => setCustomStart(e.target.value)}
+                          className="w-full px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-800 font-medium focus:outline-none focus:border-[#7A0E2E]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-gray-500 font-semibold block mb-0.5">
+                          To Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customEnd}
+                          onChange={(e) => setCustomEnd(e.target.value)}
+                          className="w-full px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-800 font-medium focus:outline-none focus:border-[#7A0E2E]"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleApplyCustomRange}
+                        className="flex-1 py-1.5 bg-[#7A0E2E] hover:bg-[#600922] text-white rounded-lg text-xs font-bold transition shadow-sm text-center"
+                      >
+                        Apply Date Range
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsDatePickerOpen(false)}
+                        className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition text-center"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </>
         ) : (
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 cursor-pointer hover:border-gray-300">
             <MapPin size={14} className="text-[#7A0E2E]" />

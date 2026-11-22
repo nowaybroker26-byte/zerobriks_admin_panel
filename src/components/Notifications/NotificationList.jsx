@@ -1,21 +1,22 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
   faBell,
   faTrash,
   faSearch,
-  faArrowLeft,
   faCheckCircle,
   faExclamationTriangle,
   faSyncAlt,
-  faFilter,
   faClock,
   faUsers,
   faCommentDots,
+  faTimes,
+  faUndo,
 } from "@fortawesome/free-solid-svg-icons";
+import Swal from "sweetalert2";
 
 const NotificationList = () => {
   const [notifications, setNotifications] = useState([]);
@@ -27,7 +28,7 @@ const NotificationList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAudience, setSelectedAudience] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const navigate = useNavigate();
 
@@ -89,10 +90,23 @@ const NotificationList = () => {
   const handleDeleteAll = async () => {
     if (notifications.length === 0) return;
 
-    const confirmed = window.confirm(
-      "⚠️ Are you sure you want to delete ALL notifications?\n\nThis will permanently delete all broadcast notifications from the server and database. This action cannot be undone."
-    );
-    if (!confirmed) return;
+    const result = await Swal.fire({
+      title: "Delete All Notifications?",
+      text: "This will permanently delete all broadcast notifications from the server. This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#7A0E2E",
+      cancelButtonColor: "#64748B",
+      confirmButtonText: "Yes, delete all",
+      cancelButtonText: "Cancel",
+      customClass: {
+        popup: "rounded-2xl shadow-xl",
+        confirmButton: "rounded-xl text-xs font-semibold px-4 py-2",
+        cancelButton: "rounded-xl text-xs font-semibold px-4 py-2",
+      },
+    });
+
+    if (!result.isConfirmed) return;
 
     setDeletingAll(true);
     setError("");
@@ -105,7 +119,6 @@ const NotificationList = () => {
           `${process.env.REACT_APP_API_BASE_URL}/api/delete_all_notifications`
         );
       } catch (delErr) {
-        // Fallback to POST if DELETE method is blocked
         res = await axios.post(
           `${process.env.REACT_APP_API_BASE_URL}/api/delete_all_notifications`
         );
@@ -113,8 +126,8 @@ const NotificationList = () => {
 
       if (res.status === 200 || res.data?.status === 1) {
         setNotifications([]);
-        setSuccess("All notifications have been successfully deleted from the server.");
-        setTimeout(() => setSuccess(""), 5000);
+        setSuccess("All notifications have been successfully deleted.");
+        setTimeout(() => setSuccess(""), 4000);
       } else {
         setError(res.data?.msg || "Failed to delete notifications.");
       }
@@ -131,10 +144,23 @@ const NotificationList = () => {
 
   // Delete single notification from server
   const handleDeleteSingle = async (notificationId) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this notification from the server?"
-    );
-    if (!confirmed) return;
+    const result = await Swal.fire({
+      title: "Delete Notification?",
+      text: "Are you sure you want to delete this notification record?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#7A0E2E",
+      cancelButtonColor: "#64748B",
+      confirmButtonText: "Yes, delete",
+      cancelButtonText: "Cancel",
+      customClass: {
+        popup: "rounded-2xl shadow-xl",
+        confirmButton: "rounded-xl text-xs font-semibold px-4 py-2",
+        cancelButton: "rounded-xl text-xs font-semibold px-4 py-2",
+      },
+    });
+
+    if (!result.isConfirmed) return;
 
     setDeletingId(notificationId);
     setError("");
@@ -159,7 +185,7 @@ const NotificationList = () => {
           prev.filter((n) => n._id !== notificationId)
         );
         setSuccess("Notification deleted successfully.");
-        setTimeout(() => setSuccess(""), 4000);
+        setTimeout(() => setSuccess(""), 3500);
       } else {
         setError(res.data?.msg || "Failed to delete notification.");
       }
@@ -216,7 +242,7 @@ const NotificationList = () => {
           return (
             <span
               key={idx}
-              className="badge rounded-pill border px-2 py-1 fw-semibold"
+              className="badge rounded-pill border px-2 py-0.5 fw-semibold"
               style={{ ...style, fontSize: "11px" }}
             >
               {label}
@@ -230,18 +256,15 @@ const NotificationList = () => {
   // Filtered notifications
   const filteredNotifications = useMemo(() => {
     return notifications.filter((notif) => {
-      const titleMatch = notif.notification_title
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const messageMatch = notif.message
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const audienceMatch = notif.send_to
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const q = searchQuery.toLowerCase().trim();
+      const titleMatch = (notif.notification_title || "")
+        .toLowerCase()
+        .includes(q);
+      const messageMatch = (notif.message || "").toLowerCase().includes(q);
+      const audienceMatch = (notif.send_to || "").toLowerCase().includes(q);
 
       const matchesSearch =
-        !searchQuery || titleMatch || messageMatch || audienceMatch;
+        !q || titleMatch || messageMatch || audienceMatch;
 
       if (!matchesSearch) return false;
 
@@ -252,37 +275,37 @@ const NotificationList = () => {
       if (selectedAudience === "owner") return sendTo.includes("owner");
       if (selectedAudience === "builder")
         return sendTo.includes("builder") || sendTo.includes("developer");
+      if (selectedAudience === "agent") return sendTo.includes("agent");
 
       return true;
     });
   }, [notifications, searchQuery, selectedAudience]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage) || 1;
-  const paginatedNotifications = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredNotifications.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredNotifications, currentPage]);
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedAudience, pageSize]);
 
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  // Pagination logic
+  const totalPages = Math.max(1, Math.ceil(filteredNotifications.length / pageSize));
+  const paginatedNotifications = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredNotifications.slice(startIndex, startIndex + pageSize);
+  }, [filteredNotifications, currentPage, pageSize]);
 
   return (
-    <div className="container-fluid pt-3 px-4 pb-5" style={{ minHeight: "100vh" }}>
+    <div className="w-full max-w-7xl mx-auto px-4 py-6" style={{ minHeight: "100vh" }}>
       {/* Alert Messages */}
       {error && (
         <div
-          className="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 mb-3 d-flex align-items-center"
+          className="alert alert-danger alert-dismissible fade show shadow-sm rounded-xl mb-3 d-flex align-items-center text-sm"
           role="alert"
         >
           <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
           <div className="flex-grow-1">{error}</div>
           <button
             type="button"
-            className="btn-close"
+            className="btn-close text-xs"
             onClick={() => setError("")}
             aria-label="Close"
           ></button>
@@ -291,307 +314,377 @@ const NotificationList = () => {
 
       {success && (
         <div
-          className="alert alert-success alert-dismissible fade show shadow-sm rounded-3 mb-3 d-flex align-items-center"
+          className="alert alert-success alert-dismissible fade show shadow-sm rounded-xl mb-3 d-flex align-items-center text-sm"
           role="alert"
         >
           <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
           <div className="flex-grow-1">{success}</div>
           <button
             type="button"
-            className="btn-close"
+            className="btn-close text-xs"
             onClick={() => setSuccess("")}
             aria-label="Close"
           ></button>
         </div>
       )}
 
-      {/* Main Card */}
-      <div className="bg-white rounded-4 shadow-sm border p-4">
-        {/* Header Section */}
-        <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
-          <div>
-            <div className="d-flex align-items-center gap-2 mb-1">
-              <Link
-                to="/dashboard"
-                className="text-decoration-none text-muted small fw-semibold d-inline-flex align-items-center"
-              >
-                <FontAwesomeIcon icon={faArrowLeft} className="me-1" />
-                Back to Dashboard
-              </Link>
-              <span className="text-muted small">•</span>
-              <span
-                className="badge rounded-pill px-2.5 py-0.5 fw-bold text-uppercase"
-                style={{
-                  backgroundColor: "rgba(122, 14, 46, 0.08)",
-                  color: "#7A0E2E",
-                  fontSize: "11px",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Communications & Broadcasts
-              </span>
+      {/* Main Container Card */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4 sm:p-6 overflow-hidden">
+        {/* ================================================================
+            PAGE HEADER (Compact, Sleek, Professional)
+        ================================================================= */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm flex-shrink-0"
+              style={{ backgroundColor: "#7A0E2E" }}
+            >
+              <FontAwesomeIcon
+                icon={faBell}
+                className="text-base text-amber-300"
+              />
             </div>
-            <h3 className="h4 fw-bold text-dark mb-1 d-flex align-items-center">
-              <span
-                className="d-inline-flex align-items-center justify-content-center rounded-circle me-2"
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  backgroundColor: "rgba(122, 14, 46, 0.1)",
-                  color: "#7A0E2E",
-                }}
-              >
-                <FontAwesomeIcon icon={faBell} />
-              </span>
-              Push Notifications
-            </h3>
-            <p className="text-muted small mb-0">
-              Manage broadcast notifications sent to app users and monitor dispatch history.
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-gray-900 tracking-tight m-0">
+                  Push Notifications
+                </h2>
+                <span
+                  className="badge rounded-pill fw-semibold"
+                  style={{
+                    backgroundColor: "rgba(122, 14, 46, 0.08)",
+                    color: "#7A0E2E",
+                    fontSize: "11.5px",
+                    padding: "3px 8px",
+                  }}
+                >
+                  {notifications.length} Total
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 m-0">
+                Manage and monitor broadcast push notifications sent to app users
+              </p>
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="d-flex align-items-center gap-2 mt-3 mt-md-0">
+          {/* Action Buttons (Clean & Compact) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Refresh */}
             <button
               onClick={fetchNotifications}
               disabled={loading}
-              className="btn btn-outline-secondary px-3 py-2 fw-semibold rounded-pill shadow-xs transition d-inline-flex align-items-center"
-              style={{ borderColor: "#CBD5E1", color: "#334155" }}
+              className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 shadow-xs"
+              style={{ height: "36px", fontSize: "12px", borderRadius: "8px" }}
               title="Refresh list"
             >
               <FontAwesomeIcon
                 icon={faSyncAlt}
-                className={`me-1.5 ${loading ? "fa-spin" : ""}`}
+                className={`text-xs ${loading ? "fa-spin" : ""}`}
               />
-              Refresh
+              <span>Refresh</span>
             </button>
 
-            {/* DELETE ALL BUTTON */}
+            {/* Delete All */}
             <button
               onClick={handleDeleteAll}
               disabled={deletingAll || notifications.length === 0}
-              className="btn btn-outline-danger px-3.5 py-2 fw-semibold rounded-pill shadow-xs transition d-inline-flex align-items-center"
+              className="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1.5 px-3 rounded-lg text-xs font-semibold shadow-xs"
               style={{
+                height: "36px",
+                fontSize: "12px",
+                borderRadius: "8px",
                 borderColor: "#FCA5A5",
                 color: "#DC2626",
                 backgroundColor: "#FEF2F2",
               }}
-              title="Permanently delete all notifications from server"
+              title="Permanently delete all notifications"
             >
               <FontAwesomeIcon
                 icon={faTrash}
-                className={`me-1.5 ${deletingAll ? "fa-spin" : ""}`}
+                className={`text-xs ${deletingAll ? "fa-spin" : ""}`}
               />
-              {deletingAll ? "Deleting All..." : "Delete All"}
+              <span>{deletingAll ? "Deleting..." : "Delete All"}</span>
             </button>
 
-            {/* ADD NOTIFICATION BUTTON */}
+            {/* Add Notification */}
             <button
               onClick={() => navigate("/notification")}
-              className="btn text-white px-3.5 py-2 fw-semibold rounded-pill shadow-sm transition d-inline-flex align-items-center"
+              className="btn btn-sm text-white d-inline-flex align-items-center gap-1.5 px-3.5 rounded-lg text-xs font-semibold shadow-xs"
               style={{
+                height: "36px",
+                fontSize: "12px",
+                borderRadius: "8px",
                 backgroundColor: "#7A0E2E",
                 borderColor: "#7A0E2E",
               }}
             >
-              <FontAwesomeIcon icon={faPlus} className="me-1.5" />
-              Add Notification
+              <FontAwesomeIcon icon={faPlus} className="text-xs" />
+              <span>Add Notification</span>
             </button>
           </div>
         </div>
 
-        {/* Filter and Search Bar */}
-        <div className="row g-3 align-items-center mb-4">
-          {/* Search Input */}
-          <div className="col-12 col-md-5">
-            <div className="input-group">
-              <span
-                className="input-group-text bg-white border-end-0 text-muted"
-                style={{ borderColor: "#E2E8F0" }}
-              >
-                <FontAwesomeIcon icon={faSearch} />
-              </span>
+        {/* Scoped CSS for scrollbar hiding */}
+        <style>{`
+          .filter-horizontal-scroll::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+          .filter-horizontal-scroll {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+          }
+        `}</style>
+
+        {/* ================================================================
+            SLEEK SINGLE-ROW HORIZONTAL FILTER TOOLBAR
+        ================================================================= */}
+        <div
+          className="p-2.5 rounded-xl mb-3 border bg-gray-50/80 shadow-xs mt-3"
+          style={{ borderColor: "#E2E8F0" }}
+        >
+          <div
+            className="flex flex-nowrap items-center gap-2 overflow-x-auto filter-horizontal-scroll"
+            style={{
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            {/* Search Input */}
+            <div className="relative" style={{ flex: "1 1 260px", minWidth: "180px" }}>
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="text-gray-400 text-xs absolute left-3 top-1/2 -translate-y-1/2"
+              />
               <input
                 type="text"
-                className="form-control border-start-0 ps-0 shadow-none"
-                style={{ borderColor: "#E2E8F0", fontSize: "14px" }}
-                placeholder="Search by title, message, audience..."
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title, message, audience..."
+                className="form-control form-control-sm bg-white border-secondary-subtle ps-4 pe-4 text-gray-800"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                  paddingLeft: "32px",
                 }}
               />
-            </div>
-          </div>
-
-          {/* Quick Filter Pills */}
-          <div className="col-12 col-md-7 d-flex justify-content-md-end flex-wrap gap-1.5">
-            <span className="text-muted small align-self-center me-1 d-none d-lg-inline">
-              <FontAwesomeIcon icon={faFilter} className="me-1 text-muted" /> Filter:
-            </span>
-            {[
-              { id: "all", label: "All" },
-              { id: "buyer", label: "Buyers" },
-              { id: "owner", label: "Owners" },
-              { id: "builder", label: "Builders" },
-            ].map((tab) => {
-              const active = selectedAudience === tab.id;
-              return (
+              {searchQuery && (
                 <button
-                  key={tab.id}
-                  onClick={() => {
-                    setSelectedAudience(tab.id);
-                    setCurrentPage(1);
-                  }}
-                  className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold transition ${
-                    active ? "text-white shadow-xs" : "btn-light text-muted border"
-                  }`}
-                  style={{
-                    backgroundColor: active ? "#7A0E2E" : "#F8FAFC",
-                    borderColor: active ? "#7A0E2E" : "#E2E8F0",
-                    fontSize: "12px",
-                  }}
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="btn btn-link position-absolute top-50 end-0 translate-middle-y p-0 me-2 text-muted"
+                  style={{ textDecoration: "none" }}
+                  title="Clear search"
                 >
-                  {tab.label}
+                  <FontAwesomeIcon icon={faTimes} className="text-xs" />
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Counter Info */}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <span className="text-muted small fw-semibold">
-            Total Broadcasts:{" "}
-            <strong className="text-dark">{notifications.length}</strong>
-            {searchQuery || selectedAudience !== "all" ? (
-              <span className="text-muted ms-2">
-                (Showing <strong>{filteredNotifications.length}</strong> matching)
-              </span>
-            ) : null}
-          </span>
-        </div>
-
-        {/* Loading Spinner */}
-        {loading && (
-          <div className="text-center py-5">
-            <div
-              className="spinner-border text-danger"
-              role="status"
-              style={{ color: "#7A0E2E" }}
-            >
-              <span className="visually-hidden">Loading notifications...</span>
+              )}
             </div>
-            <p className="text-muted mt-2 small">Loading notification records...</p>
-          </div>
-        )}
 
-        {/* Empty State */}
-        {!loading && filteredNotifications.length === 0 && (
-          <div className="text-center py-5 border rounded-4 bg-light my-2">
-            <div
-              className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-              style={{
-                width: "56px",
-                height: "56px",
-                backgroundColor: "rgba(122, 14, 46, 0.08)",
-                color: "#7A0E2E",
-              }}
-            >
-              <FontAwesomeIcon icon={faBell} size="lg" />
-            </div>
-            <h5 className="fw-bold text-dark mb-1">
-              {notifications.length === 0
-                ? "No Notifications Found"
-                : "No Matching Notifications"}
-            </h5>
-            <p className="text-muted small mb-3">
-              {notifications.length === 0
-                ? "No notifications have been broadcast yet. Click below to compose one."
-                : "Try adjusting your search criteria or audience filter."}
-            </p>
-            {notifications.length === 0 ? (
-              <button
-                onClick={() => navigate("/notification")}
-                className="btn btn-sm text-white px-3.5 py-2 rounded-pill fw-semibold shadow-xs"
-                style={{ backgroundColor: "#7A0E2E" }}
+            {/* Audience Filter Dropdown */}
+            <div style={{ flex: "0 1 160px", minWidth: "140px" }}>
+              <select
+                value={selectedAudience}
+                onChange={(e) => setSelectedAudience(e.target.value)}
+                className="form-select form-select-sm bg-white border-secondary-subtle text-gray-700 font-medium cursor-pointer"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                }}
               >
-                <FontAwesomeIcon icon={faPlus} className="me-1.5" />
-                Add Notification
-              </button>
-            ) : (
+                <option value="all">All Audiences</option>
+                <option value="buyer">Buyers / Tenants</option>
+                <option value="owner">Owners</option>
+                <option value="builder">Builders</option>
+                <option value="agent">Agents</option>
+              </select>
+            </div>
+
+            {/* Page Size Dropdown */}
+            <div style={{ flex: "0 1 110px", minWidth: "95px" }}>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="form-select form-select-sm bg-white border-secondary-subtle text-gray-700 font-medium cursor-pointer"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                }}
+              >
+                <option value={10}>10 / page</option>
+                <option value={25}>25 / page</option>
+                <option value={50}>50 / page</option>
+              </select>
+            </div>
+
+            {/* Counter Badge */}
+            <div className="text-xs text-gray-500 font-medium px-1 flex-shrink-0">
+              Showing <strong className="text-gray-900">{filteredNotifications.length}</strong> of{" "}
+              <strong className="text-gray-900">{notifications.length}</strong>
+            </div>
+
+            {/* Reset Button */}
+            {(searchQuery || selectedAudience !== "all") && (
               <button
+                type="button"
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedAudience("all");
                 }}
-                className="btn btn-sm btn-outline-secondary px-3 py-1.5 rounded-pill fw-semibold"
+                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 flex-shrink-0"
+                style={{ height: "36px", fontSize: "12px", borderRadius: "8px" }}
+                title="Reset Filters"
               >
-                Clear Filters
+                <FontAwesomeIcon icon={faUndo} className="text-xs" />
+                <span>Reset</span>
               </button>
             )}
           </div>
-        )}
+        </div>
 
-        {/* Notifications Table */}
-        {!loading && filteredNotifications.length > 0 && (
-          <div className="table-responsive rounded-3 border" style={{ borderColor: "#E2E8F0" }}>
-            <table className="table table-hover align-middle mb-0">
-              <thead
-                style={{
-                  backgroundColor: "#F8FAFC",
-                  borderBottom: "2px solid #E2E8F0",
-                }}
-              >
-                <tr className="text-muted small text-uppercase fw-bold" style={{ fontSize: "11px", letterSpacing: "0.5px" }}>
-                  <th style={{ width: "50px" }} className="py-3 px-3 text-center">
-                    #
-                  </th>
-                  <th style={{ minWidth: "200px" }} className="py-3">
-                    <FontAwesomeIcon icon={faBell} className="me-1.5 text-muted" />
-                    Title
-                  </th>
-                  <th style={{ minWidth: "300px" }} className="py-3">
-                    <FontAwesomeIcon icon={faCommentDots} className="me-1.5 text-muted" />
-                    Message
-                  </th>
-                  <th style={{ minWidth: "160px" }} className="py-3">
-                    <FontAwesomeIcon icon={faUsers} className="me-1.5 text-muted" />
-                    Sent To
-                  </th>
-                  <th style={{ minWidth: "160px" }} className="py-3">
-                    <FontAwesomeIcon icon={faClock} className="me-1.5 text-muted" />
-                    Timestamp
-                  </th>
-                  <th style={{ width: "90px" }} className="py-3 text-center">
-                    Action
-                  </th>
+        {/* ================================================================
+            NOTIFICATIONS TABLE (With In-Table Loader & Empty State)
+        ================================================================= */}
+        <div className="overflow-x-auto mt-3">
+          <table
+            className="table table-hover align-middle border-separate border-spacing-0 w-full"
+            style={{ borderRadius: "10px", overflow: "hidden" }}
+          >
+            <thead>
+              <tr>
+                <th
+                  className="py-3 px-3 text-center text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", width: "50px" }}
+                >
+                  #
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "180px" }}
+                >
+                  <FontAwesomeIcon icon={faBell} className="mr-1.5 text-amber-300" />
+                  Title
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "320px" }}
+                >
+                  <FontAwesomeIcon icon={faCommentDots} className="mr-1.5 text-amber-300" />
+                  Message
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "150px" }}
+                >
+                  <FontAwesomeIcon icon={faUsers} className="mr-1.5 text-amber-300" />
+                  Audience
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "160px" }}
+                >
+                  <FontAwesomeIcon icon={faClock} className="mr-1.5 text-amber-300" />
+                  Timestamp
+                </th>
+                <th
+                  className="py-3 px-3 text-center text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", width: "90px" }}
+                >
+                  Action
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {/* Point 3: Clean loader while data is loading */}
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-12">
+                    <div
+                      className="spinner-border text-danger"
+                      role="status"
+                      style={{ color: "#7A0E2E", width: "2.2rem", height: "2.2rem" }}
+                    >
+                      <span className="visually-hidden">Loading notifications...</span>
+                    </div>
+                    <p className="text-muted mt-2.5 text-xs font-semibold mb-0">
+                      Loading broadcast notifications...
+                    </p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {paginatedNotifications.map((notification, index) => {
-                  const rowNumber =
-                    (currentPage - 1) * itemsPerPage + index + 1;
+              ) : filteredNotifications.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-12">
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
+                      style={{
+                        width: "44px",
+                        height: "44px",
+                        backgroundColor: "rgba(122, 14, 46, 0.08)",
+                        color: "#7A0E2E",
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faBell} className="text-base" />
+                    </div>
+                    <h6 className="fw-bold text-gray-900 mb-1 text-sm">
+                      {notifications.length === 0
+                        ? "No Notifications Broadcasted Yet"
+                        : "No Matching Notifications Found"}
+                    </h6>
+                    <p className="text-muted text-xs mb-3">
+                      {notifications.length === 0
+                        ? "Click below to compose and broadcast your first push alert."
+                        : "Try adjusting your search criteria or audience filter."}
+                    </p>
+                    {notifications.length === 0 ? (
+                      <button
+                        onClick={() => navigate("/notification")}
+                        className="btn btn-sm text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs"
+                        style={{ backgroundColor: "#7A0E2E" }}
+                      >
+                        <FontAwesomeIcon icon={faPlus} className="me-1.5" />
+                        Compose Notification
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSelectedAudience("all");
+                        }}
+                        className="btn btn-sm btn-outline-secondary px-3 py-1.5 rounded-lg text-xs font-semibold"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                paginatedNotifications.map((notification, index) => {
+                  const rowNumber = (currentPage - 1) * pageSize + index + 1;
                   const isDeleting = deletingId === notification._id;
 
                   return (
                     <tr
                       key={notification._id || index}
-                      className="transition"
+                      className="hover:bg-rose-50/20 transition-colors"
                       style={{ borderBottom: "1px solid #F1F5F9" }}
                     >
-                      <td className="px-3 text-center text-muted fw-semibold small">
+                      <td className="px-3 text-center text-gray-500 font-semibold text-xs">
                         {rowNumber}
                       </td>
-                      <td className="py-3">
-                        <span className="fw-semibold text-dark d-block">
+                      <td className="py-3 px-3">
+                        <span className="font-bold text-gray-900 text-xs block">
                           {notification.notification_title || "Untitled"}
                         </span>
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 px-3">
                         <p
-                          className="text-muted small mb-0"
+                          className="text-gray-600 text-xs mb-0"
                           style={{
                             maxWidth: "420px",
                             whiteSpace: "normal",
@@ -602,25 +695,25 @@ const NotificationList = () => {
                           {notification.message || "—"}
                         </p>
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 px-3">
                         {renderAudiencePills(notification.send_to)}
                       </td>
-                      <td className="py-3 text-muted small">
+                      <td className="py-3 px-3 text-gray-500 text-xs">
                         {formatDate(notification.timestamp)}
                       </td>
-                      <td className="py-3 text-center">
+                      <td className="py-3 px-3 text-center">
                         <button
                           onClick={() => handleDeleteSingle(notification._id)}
                           disabled={isDeleting}
                           className="btn btn-sm btn-outline-danger rounded-circle p-0 d-inline-flex align-items-center justify-content-center transition shadow-xs"
                           style={{
-                            width: "32px",
-                            height: "32px",
+                            width: "30px",
+                            height: "30px",
                             borderColor: "#FCA5A5",
                             color: "#DC2626",
                             backgroundColor: "#FEF2F2",
                           }}
-                          title="Delete this notification from server"
+                          title="Delete notification"
                         >
                           <FontAwesomeIcon
                             icon={faTrash}
@@ -631,67 +724,120 @@ const NotificationList = () => {
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Pagination Section */}
-        {!loading && totalPages > 1 && (
-          <div className="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3 border-top">
-            <span className="text-muted small">
+        {/* ================================================================
+            PAGINATION SECTION
+        ================================================================= */}
+        {!loading && filteredNotifications.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 mt-3 border-t border-gray-100 text-xs text-gray-500">
+            <div>
               Showing{" "}
-              <strong>
-                {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                {Math.min(currentPage * itemsPerPage, filteredNotifications.length)}
+              <strong className="text-gray-900">
+                {(currentPage - 1) * pageSize + 1}
               </strong>{" "}
-              of <strong>{filteredNotifications.length}</strong> items
-            </span>
+              to{" "}
+              <strong className="text-gray-900">
+                {Math.min(currentPage * pageSize, filteredNotifications.length)}
+              </strong>{" "}
+              of{" "}
+              <strong className="text-gray-900">{filteredNotifications.length}</strong>{" "}
+              notifications
+            </div>
 
-            <nav aria-label="Notification pagination">
-              <ul className="pagination pagination-sm mb-0 gap-1">
-                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                  <button
-                    className="page-link rounded-pill px-3"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                  >
-                    Previous
-                  </button>
-                </li>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <li
-                    key={page}
-                    className={`page-item ${currentPage === page ? "active" : ""}`}
-                  >
+            <div className="flex items-center gap-2">
+              <nav aria-label="Notification pagination">
+                <ul className="pagination pagination-sm mb-0 gap-1 align-items-center flex-wrap">
+                  {/* First */}
+                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
                     <button
-                      className="page-link rounded-circle d-flex align-items-center justify-content-center"
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        backgroundColor: currentPage === page ? "#7A0E2E" : undefined,
-                        borderColor: currentPage === page ? "#7A0E2E" : undefined,
-                      }}
-                      onClick={() => handlePageChange(page)}
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      title="First Page"
                     >
-                      {page}
+                      « First
                     </button>
                   </li>
-                ))}
-                <li
-                  className={`page-item ${
-                    currentPage === totalPages ? "disabled" : ""
-                  }`}
-                >
-                  <button
-                    className="page-link rounded-pill px-3"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                  >
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav>
+
+                  {/* Prev */}
+                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      title="Previous Page"
+                    >
+                      ‹ Prev
+                    </button>
+                  </li>
+
+                  {/* Numeric Page Buttons */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => {
+                      return (
+                        p === 1 ||
+                        p === totalPages ||
+                        Math.abs(p - currentPage) <= 2
+                      );
+                    })
+                    .map((pageNum, idx, arr) => {
+                      const prev = arr[idx - 1];
+                      const isActive = currentPage === pageNum;
+                      return (
+                        <React.Fragment key={pageNum}>
+                          {prev && pageNum - prev > 1 && (
+                            <li className="page-item disabled px-1 text-muted small">...</li>
+                          )}
+                          <li className={`page-item ${isActive ? "active" : ""}`}>
+                            <button
+                              className="page-link rounded-2 fw-bold text-xs d-flex align-items-center justify-content-center shadow-xs"
+                              style={{
+                                minWidth: "30px",
+                                height: "30px",
+                                backgroundColor: isActive ? "#7A0E2E" : undefined,
+                                borderColor: isActive ? "#7A0E2E" : undefined,
+                                color: isActive ? "#FFFFFF" : undefined,
+                              }}
+                              onClick={() => setCurrentPage(pageNum)}
+                            >
+                              {pageNum}
+                            </button>
+                          </li>
+                        </React.Fragment>
+                      );
+                    })}
+
+                  {/* Next */}
+                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      title="Next Page"
+                    >
+                      Next ›
+                    </button>
+                  </li>
+
+                  {/* Last */}
+                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      title="Last Page"
+                    >
+                      Last »
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
           </div>
         )}
       </div>

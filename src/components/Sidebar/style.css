@@ -65,11 +65,15 @@ aside::-webkit-scrollbar {
   height: 0 !important;
 }
 
-/* Hide horizontal scrollbar helper */
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* Hide horizontal and vertical scrollbars helper */
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }

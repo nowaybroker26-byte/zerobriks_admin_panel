@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   X,
   User,
@@ -38,10 +39,13 @@ import {
   ArrowLeftRight,
   ShoppingCart,
   BarChart3,
+  ExternalLink,
+  UserCheck,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 
 const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(false);
   const [trackingData, setTrackingData] = useState(null);
@@ -187,6 +191,17 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
 
   const cleanPhone = (u.mobile_number || u.mobile || "").replace(/[^0-9]/g, "");
 
+  const displayUserType = (() => {
+    const raw = String(u.user_type || u.type || "").trim();
+    const lower = raw.toLowerCase();
+    if (lower.includes("builder") || lower.includes("developer")) return "Builder / Developer";
+    if (lower.includes("owner")) return "Property Owner";
+    if (lower.includes("buyer") || lower.includes("tenant")) return "Buyer / Tenant";
+    if (lower.includes("pg")) return "PG Seeker";
+    if (lower.includes("nri")) return "NRI Client";
+    return raw || "Property Owner";
+  })();
+
   // Split member_since into date and time parts if formatted with comma
   const createdParts = (u.created_at || "26 Jul 2026, 10:15 AM").split(",");
   const memberDatePart = createdParts[0] || "26 Jul 2026";
@@ -284,10 +299,27 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
               </div>
 
               <div className="min-w-0 flex-1">
-                {/* Line 1: Full Name + Active|Verified Badge + Edit */}
+                {/* Line 1: Full Name + User Type Badge + Active|Verified Badge + Edit */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-lg font-black text-gray-900 tracking-tight leading-tight">
                     {u.full_name || u.name || "User"}
+                  </span>
+
+                  {/* Prominent User Type Badge */}
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-black border shadow-2xs ${
+                      displayUserType.toLowerCase().includes("builder") ||
+                      displayUserType.toLowerCase().includes("developer")
+                        ? "bg-purple-50 text-purple-800 border-purple-200"
+                        : displayUserType.toLowerCase().includes("buyer") ||
+                          displayUserType.toLowerCase().includes("tenant")
+                        ? "bg-blue-50 text-blue-800 border-blue-200"
+                        : "bg-amber-50 text-amber-900 border-amber-300"
+                    }`}
+                    title={`User Type: ${displayUserType}`}
+                  >
+                    <UserCheck size={12} strokeWidth={2.5} />
+                    <span>{displayUserType}</span>
                   </span>
 
                   <span
@@ -363,10 +395,10 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
                     <span>{u.location_display || u.city || "Pune"}</span>
                   </div>
 
-                  {/* Role Category */}
-                  <div className="inline-flex items-center gap-1 font-medium text-gray-700">
-                    <Home size={12} className="text-[#881337]" />
-                    <span>{u.company_name || "Individual Homeowner"}</span>
+                  {/* User Type Display */}
+                  <div className="inline-flex items-center gap-1 font-semibold text-gray-800">
+                    <UserCheck size={12} className="text-[#881337]" />
+                    <span>User Type: <strong className="text-[#881337]">{displayUserType}</strong></span>
                   </div>
                 </div>
               </div>
@@ -828,12 +860,23 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
                     {/* User Type */}
                     <div className="grid grid-cols-12 items-center gap-2">
                       <div className="col-span-5 flex items-center gap-2 text-gray-600 font-medium">
-                        <User size={13} className="text-[#9E1C2E] flex-shrink-0" />
+                        <UserCheck size={13} className="text-[#9E1C2E] flex-shrink-0" />
                         <span>User Type</span>
                       </div>
                       <div className="col-span-7">
-                        <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-100/80 text-amber-900">
-                          {u.user_type || u.type || "Owner"}
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border ${
+                            displayUserType.toLowerCase().includes("builder") ||
+                            displayUserType.toLowerCase().includes("developer")
+                              ? "bg-purple-50 text-purple-800 border-purple-200"
+                              : displayUserType.toLowerCase().includes("buyer") ||
+                                displayUserType.toLowerCase().includes("tenant")
+                              ? "bg-blue-50 text-blue-800 border-blue-200"
+                              : "bg-amber-50 text-amber-900 border-amber-300"
+                          }`}
+                        >
+                          <UserCheck size={12} />
+                          <span>{displayUserType}</span>
                         </span>
                       </div>
                     </div>
@@ -1210,75 +1253,115 @@ const UserTrackingModal = ({ isOpen, onClose, user, onStatusChange }) => {
         )}
 
         {/* =========================================================================
-            TAB CONTENT 2: POSTED PROPERTIES
+            TAB CONTENT 2: POSTED PROPERTIES (Clickable with Full Details Navigation)
         ========================================================================= */}
         {activeTab === "properties" && (
           <div className="bg-white rounded-2xl border border-gray-200/90 shadow-sm p-5">
-            <h3 className="text-sm font-black text-gray-900 mb-4">
-              Properties Posted by {u.full_name || u.name} ({properties.length})
-            </h3>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h3 className="text-sm font-black text-gray-900 m-0">
+                Properties Posted by {u.full_name || u.name} ({properties.length})
+              </h3>
+              <span className="text-xs text-gray-500">
+                Click any property card to view complete property details
+              </span>
+            </div>
             {properties.length === 0 ? (
               <div className="text-center py-12 text-gray-400 text-xs">
                 No properties posted yet by this user.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {properties.map((p) => (
-                  <div
-                    key={p._id}
-                    className="border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow"
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h4 className="text-xs font-bold text-gray-900 m-0 truncate">
-                        {p.property_name}
-                      </h4>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                        {p.available_status}
-                      </span>
+                {properties.map((p) => {
+                  const propId = p._id || p.property_id || p.id;
+                  return (
+                    <div
+                      key={propId}
+                      onClick={() => propId && navigate(`/admin/property-details/${propId}`)}
+                      className="border border-gray-200 hover:border-[#7A0E2E] rounded-xl p-4 hover:shadow-md transition-all cursor-pointer group bg-white flex flex-col justify-between"
+                      title="Tap to view full property details"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="text-xs font-bold text-gray-900 m-0 truncate group-hover:text-[#7A0E2E] transition-colors">
+                            {p.property_name}
+                          </h4>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">
+                            {p.available_status || "Available"}
+                          </span>
+                        </div>
+                        <div className="text-base font-black text-[#881337] mb-1">
+                          ₹ {Number(p.property_price || 0).toLocaleString("en-IN")}
+                        </div>
+                        <div className="text-[11px] text-gray-500 mb-2 truncate">
+                          {p.address ? `${p.address}, ` : ""}{p.city_name || "Pune"}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 text-[10px] text-gray-500 font-medium">
+                        <span>
+                          {p.bhk_type} • {p.property_category_type || "Residential"}
+                        </span>
+                        <span className="text-[#7A0E2E] font-bold group-hover:underline inline-flex items-center gap-1">
+                          View Details <ExternalLink size={11} />
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-base font-black text-[#881337] mb-1">
-                      ₹ {Number(p.property_price || 0).toLocaleString("en-IN")}
-                    </div>
-                    <div className="text-[11px] text-gray-500 mb-2">
-                      {p.address}, {p.city_name}
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[10px] text-gray-400 font-medium">
-                      <span>
-                        {p.bhk_type} • {p.property_category_type}
-                      </span>
-                      <span>{p.date}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
         )}
 
         {/* =========================================================================
-            TAB CONTENT 3: POSTED PROJECTS
+            TAB CONTENT 3: POSTED PROJECTS (Clickable with Full Details Navigation)
         ========================================================================= */}
         {activeTab === "projects" && (
           <div className="bg-white rounded-2xl border border-gray-200/90 shadow-sm p-5">
-            <h3 className="text-sm font-black text-gray-900 mb-4">
-              Projects Posted by {u.full_name || u.name} ({projects.length})
-            </h3>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h3 className="text-sm font-black text-gray-900 m-0">
+                Projects Posted by {u.full_name || u.name} ({projects.length})
+              </h3>
+              <span className="text-xs text-gray-500">
+                Click any project card to view complete project details
+              </span>
+            </div>
             {projects.length === 0 ? (
               <div className="text-center py-12 text-gray-400 text-xs">
-                No projects registered by this user.
+                No projects registered yet by this user.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {projects.map((proj) => (
-                  <div
-                    key={proj._id}
-                    className="border border-gray-200 rounded-xl p-4"
-                  >
-                    <h4 className="text-xs font-bold text-gray-900">
-                      {proj.project_name}
-                    </h4>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {projects.map((proj) => {
+                  const projId = proj._id || proj.project_id || proj.id;
+                  return (
+                    <div
+                      key={projId}
+                      onClick={() => projId && navigate(`/admin/project-details/${projId}`)}
+                      className="border border-gray-200 hover:border-[#7A0E2E] rounded-xl p-4 hover:shadow-md transition-all cursor-pointer group bg-white flex flex-col justify-between"
+                      title="Tap to view full project details"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="text-xs font-bold text-gray-900 m-0 truncate group-hover:text-[#7A0E2E] transition-colors">
+                            {proj.project_name}
+                          </h4>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
+                            {proj.project_status || proj.admin_approval || "Active"}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-gray-500 mb-2 truncate">
+                          {proj.address ? `${proj.address}, ` : ""}{proj.city_name || "Pune"}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 text-[10px] text-gray-500 font-medium">
+                        <span>{proj.date ? `Posted: ${proj.date}` : "Builder Project"}</span>
+                        <span className="text-[#7A0E2E] font-bold group-hover:underline inline-flex items-center gap-1">
+                          View Project <ExternalLink size={11} />
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

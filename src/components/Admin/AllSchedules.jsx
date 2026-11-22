@@ -2,23 +2,20 @@ import React, { useState, useEffect, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faVideo,
-  faCalendarAlt,
   faClock,
   faUser,
   faPhoneAlt,
-  faEnvelope,
   faBuilding,
   faMapMarkerAlt,
   faSearch,
   faSyncAlt,
-  faArrowLeft,
   faExclamationTriangle,
-  faFilter,
   faPhoneVolume,
-  faCity,
   faHome,
+  faTimes,
+  faUndo,
 } from "@fortawesome/free-solid-svg-icons";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const AllSchedules = () => {
@@ -76,6 +73,7 @@ const AllSchedules = () => {
 
   useEffect(() => {
     fetchSchedules(pagination.current_page, pagination.page_size);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleTabChange = (tab) => {
@@ -89,8 +87,7 @@ const AllSchedules = () => {
     }
   };
 
-  const handlePageSizeChange = (e) => {
-    const newSize = Number(e.target.value);
+  const handlePageSizeChange = (newSize) => {
     setPagination((prev) => ({ ...prev, page_size: newSize }));
     fetchSchedules(1, newSize);
   };
@@ -106,7 +103,7 @@ const AllSchedules = () => {
 
       // Search query
       if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
 
       const user = item.user_details || {};
       const owner = item.property_owner_details || {};
@@ -131,18 +128,18 @@ const AllSchedules = () => {
   }, [allSchedules, searchQuery, typeFilter]);
 
   return (
-    <div className="container-fluid pt-3 px-4 pb-5" style={{ minHeight: "100vh" }}>
+    <div className="w-full max-w-7xl mx-auto px-4 py-6" style={{ minHeight: "100vh" }}>
       {/* Error Alert */}
       {error && (
         <div
-          className="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 mb-3 d-flex align-items-center"
+          className="alert alert-danger alert-dismissible fade show shadow-sm rounded-xl mb-3 d-flex align-items-center text-sm"
           role="alert"
         >
           <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
           <div className="flex-grow-1">{error}</div>
           <button
             type="button"
-            className="btn-close"
+            className="btn-close text-xs"
             onClick={() => setError("")}
             aria-label="Close"
           ></button>
@@ -150,73 +147,67 @@ const AllSchedules = () => {
       )}
 
       {/* Main Card */}
-      <div className="bg-white rounded-4 shadow-sm border p-4">
-        {/* Header Section */}
-        <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
-          <div>
-            <div className="d-flex align-items-center gap-2 mb-1">
-              <Link
-                to="/dashboard"
-                className="text-decoration-none text-muted small fw-semibold d-inline-flex align-items-center"
-              >
-                <FontAwesomeIcon icon={faArrowLeft} className="me-1" />
-                Back to Dashboard
-              </Link>
-              <span className="text-muted small">•</span>
-              <span
-                className="badge rounded-pill px-2.5 py-0.5 fw-bold text-uppercase"
-                style={{
-                  backgroundColor: "rgba(122, 14, 46, 0.08)",
-                  color: "#7A0E2E",
-                  fontSize: "11px",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Engagement & Live Tours
-              </span>
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4 sm:p-6 overflow-hidden">
+        {/* ================================================================
+            PAGE HEADER (Compact, Sleek, Professional)
+        ================================================================= */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm flex-shrink-0"
+              style={{ backgroundColor: "#7A0E2E" }}
+            >
+              <FontAwesomeIcon
+                icon={faVideo}
+                className="text-base text-amber-300"
+              />
             </div>
-            <h3 className="h4 fw-bold text-dark mb-1 d-flex align-items-center">
-              <span
-                className="d-inline-flex align-items-center justify-content-center rounded-circle me-2"
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  backgroundColor: "rgba(122, 14, 46, 0.1)",
-                  color: "#7A0E2E",
-                }}
-              >
-                <FontAwesomeIcon icon={faVideo} />
-              </span>
-              Virtual Tours Scheduled
-            </h3>
-            <p className="text-muted small mb-0">
-              Track live walkthrough appointments scheduled between clients and property owners/builders.
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-gray-900 tracking-tight m-0">
+                  Virtual Tours Scheduled
+                </h2>
+                <span
+                  className="badge rounded-pill fw-semibold"
+                  style={{
+                    backgroundColor: "rgba(122, 14, 46, 0.08)",
+                    color: "#7A0E2E",
+                    fontSize: "11.5px",
+                    padding: "3px 8px",
+                  }}
+                >
+                  {pagination.total_count || allSchedules.length} Total
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 m-0">
+                Track live walkthrough appointments scheduled between clients and property owners/builders
+              </p>
+            </div>
           </div>
 
-          {/* Action & Tab Navigation */}
-          <div className="d-flex align-items-center gap-2 mt-3 mt-md-0 flex-wrap">
+          {/* Action & Tab Navigation (Compact & Sleek) */}
+          <div className="flex items-center gap-2 flex-wrap">
             <div
-              className="p-1 rounded-pill border d-inline-flex align-items-center bg-light"
+              className="p-1 rounded-lg border inline-flex items-center bg-gray-50/80"
               style={{ borderColor: "#E2E8F0" }}
             >
               <button
-                className="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold shadow-xs text-white"
+                className="btn btn-sm px-3 py-1 font-semibold rounded-md text-xs shadow-xs text-white"
                 style={{
                   backgroundColor: "#7A0E2E",
                   borderColor: "#7A0E2E",
-                  fontSize: "12px",
+                  height: "28px",
                 }}
                 onClick={() => handleTabChange("all")}
               >
                 All Schedules
               </button>
               <button
-                className="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold text-muted"
+                className="btn btn-sm px-3 py-1 font-semibold rounded-md text-xs text-gray-600 hover:text-gray-900"
                 style={{
                   backgroundColor: "transparent",
                   border: "none",
-                  fontSize: "12px",
+                  height: "28px",
                 }}
                 onClick={() => handleTabChange("my")}
               >
@@ -227,199 +218,256 @@ const AllSchedules = () => {
             <button
               onClick={() => fetchSchedules(pagination.current_page, pagination.page_size)}
               disabled={loading}
-              className="btn btn-outline-secondary px-3 py-1.5 fw-semibold rounded-pill shadow-xs transition d-inline-flex align-items-center"
-              style={{ borderColor: "#CBD5E1", color: "#334155", fontSize: "13px" }}
+              className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 shadow-xs"
+              style={{ height: "36px", fontSize: "12px", borderRadius: "8px" }}
               title="Refresh schedule list"
             >
               <FontAwesomeIcon
                 icon={faSyncAlt}
-                className={`me-1.5 ${loading ? "fa-spin" : ""}`}
+                className={`text-xs ${loading ? "fa-spin" : ""}`}
               />
-              Refresh
+              <span>Refresh</span>
             </button>
           </div>
         </div>
 
-        {/* Filter and Search Bar */}
-        <div className="row g-3 align-items-center mb-4">
-          {/* Search Input */}
-          <div className="col-12 col-md-5">
-            <div className="input-group">
-              <span
-                className="input-group-text bg-white border-end-0 text-muted"
-                style={{ borderColor: "#E2E8F0" }}
-              >
-                <FontAwesomeIcon icon={faSearch} />
-              </span>
+        {/* Scoped CSS for scrollbar hiding */}
+        <style>{`
+          .filter-horizontal-scroll::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+          .filter-horizontal-scroll {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+          }
+        `}</style>
+
+        {/* ================================================================
+            SLEEK SINGLE-ROW HORIZONTAL FILTER TOOLBAR
+        ================================================================= */}
+        <div
+          className="p-2.5 rounded-xl mb-3 border bg-gray-50/80 shadow-xs mt-3"
+          style={{ borderColor: "#E2E8F0" }}
+        >
+          <div
+            className="flex flex-nowrap items-center gap-2 overflow-x-auto filter-horizontal-scroll"
+            style={{
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            {/* Search Input */}
+            <div className="relative" style={{ flex: "1 1 260px", minWidth: "180px" }}>
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="text-gray-400 text-xs absolute left-3 top-1/2 -translate-y-1/2"
+              />
               <input
                 type="text"
-                className="form-control border-start-0 ps-0 shadow-none"
-                style={{ borderColor: "#E2E8F0", fontSize: "14px" }}
-                placeholder="Search by client, owner, property, city, date..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by client, owner, property, city, date..."
+                className="form-control form-control-sm bg-white border-secondary-subtle ps-4 pe-4 text-gray-800"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                  paddingLeft: "32px",
+                }}
               />
-            </div>
-          </div>
-
-          {/* Quick Filter Tabs */}
-          <div className="col-12 col-md-7 d-flex justify-content-md-end flex-wrap gap-1.5 align-items-center">
-            <span className="text-muted small me-1 d-none d-lg-inline">
-              <FontAwesomeIcon icon={faFilter} className="me-1 text-muted" /> Filter Type:
-            </span>
-            {[
-              { id: "all", label: "All Tours" },
-              { id: "Property", label: "Properties" },
-              { id: "Project", label: "Projects" },
-            ].map((tab) => {
-              const active = typeFilter === tab.id;
-              return (
+              {searchQuery && (
                 <button
-                  key={tab.id}
-                  onClick={() => setTypeFilter(tab.id)}
-                  className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold transition ${
-                    active ? "text-white shadow-xs" : "btn-light text-muted border"
-                  }`}
-                  style={{
-                    backgroundColor: active ? "#7A0E2E" : "#F8FAFC",
-                    borderColor: active ? "#7A0E2E" : "#E2E8F0",
-                    fontSize: "12px",
-                  }}
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="btn btn-link position-absolute top-50 end-0 translate-middle-y p-0 me-2 text-muted"
+                  style={{ textDecoration: "none" }}
+                  title="Clear search"
                 >
-                  {tab.label}
+                  <FontAwesomeIcon icon={faTimes} className="text-xs" />
                 </button>
-              );
-            })}
+              )}
+            </div>
 
-            {/* Page Size Select */}
-            <div className="ms-md-2 d-flex align-items-center gap-1">
-              <span className="text-muted small">Show:</span>
+            {/* Tour Type Dropdown */}
+            <div style={{ flex: "0 1 150px", minWidth: "130px" }}>
               <select
-                className="form-select form-select-sm rounded-pill shadow-none"
-                style={{ width: "75px", borderColor: "#E2E8F0", fontSize: "12px" }}
-                value={pagination.page_size}
-                onChange={handlePageSizeChange}
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="form-select form-select-sm bg-white border-secondary-subtle text-gray-700 font-medium cursor-pointer"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                }}
               >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
+                <option value="all">All Tour Types</option>
+                <option value="Property">Properties Only</option>
+                <option value="Project">Projects Only</option>
               </select>
             </div>
-          </div>
-        </div>
 
-        {/* Counter Info */}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <span className="text-muted small fw-semibold">
-            Total Bookings: <strong className="text-dark">{pagination.total_count}</strong>
-            {searchQuery || typeFilter !== "all" ? (
-              <span className="text-muted ms-2">
-                (Showing <strong>{filteredSchedules.length}</strong> matching current page)
-              </span>
-            ) : null}
-          </span>
-        </div>
-
-        {/* Loading Spinner */}
-        {loading && (
-          <div className="text-center py-5">
-            <div
-              className="spinner-border text-danger"
-              role="status"
-              style={{ color: "#7A0E2E" }}
-            >
-              <span className="visually-hidden">Loading tour schedules...</span>
+            {/* Page Size Dropdown */}
+            <div style={{ flex: "0 1 110px", minWidth: "95px" }}>
+              <select
+                value={pagination.page_size}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="form-select form-select-sm bg-white border-secondary-subtle text-gray-700 font-medium cursor-pointer"
+                style={{
+                  height: "36px",
+                  fontSize: "12px",
+                  borderRadius: "8px",
+                }}
+              >
+                <option value={10}>10 / page</option>
+                <option value={25}>25 / page</option>
+                <option value={50}>50 / page</option>
+              </select>
             </div>
-            <p className="text-muted mt-2 small">Loading appointment records...</p>
-          </div>
-        )}
 
-        {/* Empty State */}
-        {!loading && filteredSchedules.length === 0 && (
-          <div className="text-center py-5 border rounded-4 bg-light my-2">
-            <div
-              className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-              style={{
-                width: "56px",
-                height: "56px",
-                backgroundColor: "rgba(122, 14, 46, 0.08)",
-                color: "#7A0E2E",
-              }}
-            >
-              <FontAwesomeIcon icon={faVideo} size="lg" />
+            {/* Counter Badge */}
+            <div className="text-xs text-gray-500 font-medium px-1 flex-shrink-0">
+              Showing <strong className="text-gray-900">{filteredSchedules.length}</strong> of{" "}
+              <strong className="text-gray-900">{pagination.total_count || allSchedules.length}</strong>
             </div>
-            <h5 className="fw-bold text-dark mb-1">
-              {allSchedules.length === 0 ? "No Virtual Tours Scheduled" : "No Matching Appointments"}
-            </h5>
-            <p className="text-muted small mb-3">
-              {allSchedules.length === 0
-                ? "Live walkthrough tour requests scheduled by users will appear here."
-                : "Try adjusting your search query or tour type filter."}
-            </p>
-            {searchQuery || typeFilter !== "all" ? (
+
+            {/* Reset Button */}
+            {(searchQuery || typeFilter !== "all") && (
               <button
+                type="button"
                 onClick={() => {
                   setSearchQuery("");
                   setTypeFilter("all");
                 }}
-                className="btn btn-sm btn-outline-secondary px-3 py-1.5 rounded-pill fw-semibold"
+                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5 px-3 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-100 flex-shrink-0"
+                style={{ height: "36px", fontSize: "12px", borderRadius: "8px" }}
+                title="Reset Filters"
               >
-                Clear Filters
-              </button>
-            ) : (
-              <button
-                onClick={() => fetchSchedules(1, pagination.page_size)}
-                className="btn btn-sm text-white px-3.5 py-1.5 rounded-pill fw-semibold"
-                style={{ backgroundColor: "#7A0E2E" }}
-              >
-                <FontAwesomeIcon icon={faSyncAlt} className="me-1" />
-                Reload
+                <FontAwesomeIcon icon={faUndo} className="text-xs" />
+                <span>Reset</span>
               </button>
             )}
           </div>
-        )}
+        </div>
 
-        {/* Schedules Table */}
-        {!loading && filteredSchedules.length > 0 && (
-          <div className="table-responsive rounded-3 border" style={{ borderColor: "#E2E8F0" }}>
-            <table className="table table-hover align-middle mb-0">
-              <thead
-                style={{
-                  backgroundColor: "#F8FAFC",
-                  borderBottom: "2px solid #E2E8F0",
-                }}
-              >
-                <tr
-                  className="text-muted small text-uppercase fw-bold"
-                  style={{ fontSize: "11px", letterSpacing: "0.5px" }}
+        {/* ================================================================
+            SCHEDULES DATA TABLE (With In-Table Loader & Empty State)
+        ================================================================= */}
+        <div className="overflow-x-auto mt-3">
+          <table
+            className="table table-hover align-middle border-separate border-spacing-0 w-full"
+            style={{ borderRadius: "10px", overflow: "hidden" }}
+          >
+            <thead>
+              <tr>
+                <th
+                  className="py-3 px-3 text-center text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", width: "45px" }}
                 >
-                  <th style={{ width: "45px" }} className="py-3 px-3 text-center">
-                    #
-                  </th>
-                  <th style={{ minWidth: "180px" }} className="py-3">
-                    <FontAwesomeIcon icon={faUser} className="me-1.5 text-muted" />
-                    Scheduled By
-                  </th>
-                  <th style={{ minWidth: "180px" }} className="py-3">
-                    <FontAwesomeIcon icon={faUser} className="me-1.5 text-muted" />
-                    Scheduled With
-                  </th>
-                  <th style={{ minWidth: "220px" }} className="py-3">
-                    <FontAwesomeIcon icon={faBuilding} className="me-1.5 text-muted" />
-                    Property / Project
-                  </th>
-                  <th style={{ minWidth: "160px" }} className="py-3">
-                    <FontAwesomeIcon icon={faClock} className="me-1.5 text-muted" />
-                    Appointment Time
-                  </th>
-                  <th style={{ minWidth: "150px" }} className="py-3">
-                    <FontAwesomeIcon icon={faPhoneVolume} className="me-1.5 text-muted" />
-                    Call Sessions
-                  </th>
+                  #
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "180px" }}
+                >
+                  <FontAwesomeIcon icon={faUser} className="mr-1.5 text-amber-300" />
+                  Scheduled By
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "180px" }}
+                >
+                  <FontAwesomeIcon icon={faUser} className="mr-1.5 text-amber-300" />
+                  Scheduled With
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "220px" }}
+                >
+                  <FontAwesomeIcon icon={faBuilding} className="mr-1.5 text-amber-300" />
+                  Property / Project
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "160px" }}
+                >
+                  <FontAwesomeIcon icon={faClock} className="mr-1.5 text-amber-300" />
+                  Appointment Time
+                </th>
+                <th
+                  className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-white"
+                  style={{ backgroundColor: "#7A0E2E", minWidth: "150px" }}
+                >
+                  <FontAwesomeIcon icon={faPhoneVolume} className="mr-1.5 text-amber-300" />
+                  Call Sessions
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-12">
+                    <div
+                      className="spinner-border text-danger"
+                      role="status"
+                      style={{ color: "#7A0E2E", width: "2.2rem", height: "2.2rem" }}
+                    >
+                      <span className="visually-hidden">Loading tour schedules...</span>
+                    </div>
+                    <p className="text-muted mt-2.5 text-xs font-semibold mb-0">
+                      Loading appointment records...
+                    </p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredSchedules.map((schedule, index) => {
+              ) : filteredSchedules.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-12">
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
+                      style={{
+                        width: "44px",
+                        height: "44px",
+                        backgroundColor: "rgba(122, 14, 46, 0.08)",
+                        color: "#7A0E2E",
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faVideo} className="text-base" />
+                    </div>
+                    <h6 className="fw-bold text-gray-900 mb-1 text-sm">
+                      {allSchedules.length === 0 ? "No Virtual Tours Scheduled" : "No Matching Appointments Found"}
+                    </h6>
+                    <p className="text-muted text-xs mb-3">
+                      {allSchedules.length === 0
+                        ? "Live walkthrough tour requests scheduled by users will appear here."
+                        : "Try adjusting your search query or tour type filter."}
+                    </p>
+                    {searchQuery || typeFilter !== "all" ? (
+                      <button
+                        onClick={() => {
+                          setSearchQuery("");
+                          setTypeFilter("all");
+                        }}
+                        className="btn btn-sm btn-outline-secondary px-3 py-1.5 rounded-lg text-xs font-semibold"
+                      >
+                        Clear Filters
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => fetchSchedules(1, pagination.page_size)}
+                        className="btn btn-sm text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs"
+                        style={{ backgroundColor: "#7A0E2E" }}
+                      >
+                        <FontAwesomeIcon icon={faSyncAlt} className="me-1" />
+                        Reload
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                filteredSchedules.map((schedule, index) => {
                   const rowNumber =
                     (pagination.current_page - 1) * pagination.page_size + index + 1;
                   const isProject = schedule.tour_type === "Project";
@@ -434,43 +482,37 @@ const AllSchedules = () => {
                   return (
                     <tr
                       key={schedule._id || index}
-                      className="transition"
+                      className="hover:bg-rose-50/20 transition-colors"
                       style={{ borderBottom: "1px solid #F1F5F9" }}
                     >
-                      <td className="px-3 text-center text-muted fw-semibold small">
+                      <td className="px-3 text-center text-gray-500 font-semibold text-xs">
                         {rowNumber}
                       </td>
 
                       {/* Scheduled By (Client) */}
-                      <td className="py-3">
-                        <div className="d-flex align-items-center">
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2.5">
                           <div
-                            className="rounded-circle d-flex align-items-center justify-content-center me-2 text-white fw-bold flex-shrink-0"
-                            style={{
-                              width: "32px",
-                              height: "32px",
-                              backgroundColor: "#7A0E2E",
-                              fontSize: "12px",
-                            }}
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-xs select-none"
+                            style={{ backgroundColor: "#7A0E2E" }}
                           >
                             {(schedule.user_details?.full_name || "C").charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <span className="fw-semibold text-dark d-block" style={{ fontSize: "13px" }}>
+                            <span className="font-bold text-gray-900 text-xs block">
                               {schedule.user_details?.full_name || "N/A"}
                             </span>
                             {schedule.user_details?.mobile_number && (
                               <a
                                 href={`tel:${schedule.user_details.mobile_number}`}
-                                className="text-muted small text-decoration-none d-inline-flex align-items-center hover-underline"
-                                style={{ fontSize: "12px" }}
+                                className="text-gray-500 text-[11px] hover:text-[#7A0E2E] transition-colors inline-flex items-center gap-1"
                               >
-                                <FontAwesomeIcon icon={faPhoneAlt} className="me-1 text-muted" size="xs" />
-                                {schedule.user_details.mobile_number}
+                                <FontAwesomeIcon icon={faPhoneAlt} className="text-[10px]" />
+                                <span>{schedule.user_details.mobile_number}</span>
                               </a>
                             )}
                             {schedule.user_details?.email && (
-                              <div className="text-muted small" style={{ fontSize: "11px" }}>
+                              <div className="text-gray-400 text-[11px]">
                                 {truncateText(schedule.user_details.email, 24)}
                               </div>
                             )}
@@ -479,36 +521,32 @@ const AllSchedules = () => {
                       </td>
 
                       {/* Scheduled With (Owner / Builder) */}
-                      <td className="py-3">
-                        <div className="d-flex align-items-center">
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2.5">
                           <div
-                            className="rounded-circle d-flex align-items-center justify-content-center me-2 text-dark fw-bold flex-shrink-0"
+                            className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-xs select-none"
                             style={{
-                              width: "32px",
-                              height: "32px",
                               backgroundColor: "rgba(166, 129, 57, 0.15)",
                               color: "#85621e",
-                              fontSize: "12px",
                             }}
                           >
                             {(schedule.property_owner_details?.full_name || "O").charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <span className="fw-semibold text-dark d-block" style={{ fontSize: "13px" }}>
+                            <span className="font-bold text-gray-900 text-xs block">
                               {schedule.property_owner_details?.full_name || "N/A"}
                             </span>
                             {schedule.property_owner_details?.mobile_number && (
                               <a
                                 href={`tel:${schedule.property_owner_details.mobile_number}`}
-                                className="text-muted small text-decoration-none d-inline-flex align-items-center hover-underline"
-                                style={{ fontSize: "12px" }}
+                                className="text-gray-500 text-[11px] hover:text-[#7A0E2E] transition-colors inline-flex items-center gap-1"
                               >
-                                <FontAwesomeIcon icon={faPhoneAlt} className="me-1 text-muted" size="xs" />
-                                {schedule.property_owner_details.mobile_number}
+                                <FontAwesomeIcon icon={faPhoneAlt} className="text-[10px]" />
+                                <span>{schedule.property_owner_details.mobile_number}</span>
                               </a>
                             )}
                             {schedule.property_owner_details?.email && (
-                              <div className="text-muted small" style={{ fontSize: "11px" }}>
+                              <div className="text-gray-400 text-[11px]">
                                 {truncateText(schedule.property_owner_details.email, 24)}
                               </div>
                             )}
@@ -517,205 +555,202 @@ const AllSchedules = () => {
                       </td>
 
                       {/* Property / Project Details */}
-                      <td className="py-3">
-                        <div className="d-flex flex-column gap-1">
-                          <div className="d-flex align-items-center gap-1.5">
+                      <td className="py-3 px-3">
+                        <div>
+                          <div className="flex items-center gap-1.5 mb-0.5">
                             <span
-                              className="badge rounded-pill px-2 py-0.5 fw-semibold"
+                              className="badge rounded-pill px-2 py-0.5 font-semibold text-[10.5px]"
                               style={{
                                 backgroundColor: isProject
-                                  ? "rgba(166, 129, 57, 0.12)"
-                                  : "rgba(122, 14, 46, 0.1)",
-                                color: isProject ? "#85621e" : "#7A0E2E",
-                                fontSize: "10px",
+                                  ? "rgba(122, 14, 46, 0.08)"
+                                  : "rgba(13, 110, 253, 0.08)",
+                                color: isProject ? "#7A0E2E" : "#0d6efd",
+                                border: isProject
+                                  ? "1px solid rgba(122, 14, 46, 0.2)"
+                                  : "1px solid rgba(13, 110, 253, 0.2)",
                               }}
                             >
                               <FontAwesomeIcon
                                 icon={isProject ? faBuilding : faHome}
-                                className="me-1"
+                                className="text-[9px] mr-1"
                               />
-                              {isProject ? "Project" : "Property"}
+                              {schedule.tour_type || "Listing"}
                             </span>
-                            <span
-                              className="fw-semibold text-dark text-truncate"
-                              style={{ maxWidth: "200px", fontSize: "13px" }}
-                              title={
-                                isProject
-                                  ? entity?.project_name
-                                  : entity?.property_name
-                              }
-                            >
-                              {isProject
-                                ? entity?.project_name || "Untitled Project"
-                                : entity?.property_name || "Untitled Property"}
+                            <span className="font-bold text-gray-800 text-xs truncate max-w-[170px]" title={entity?.property_name || entity?.project_name}>
+                              {entity?.property_name || entity?.project_name || "Untitled Listing"}
                             </span>
                           </div>
-
-                          {entity?.address && (
-                            <span
-                              className="text-muted small text-truncate d-inline-flex align-items-center"
-                              style={{ maxWidth: "230px", fontSize: "12px" }}
-                              title={entity.address}
-                            >
-                              <FontAwesomeIcon
-                                icon={faMapMarkerAlt}
-                                className="me-1 text-muted flex-shrink-0"
-                                size="xs"
-                              />
-                              {truncateText(entity.address, 32)}
-                            </span>
-                          )}
-
                           {entity?.city_name && (
-                            <span className="text-muted small" style={{ fontSize: "11px" }}>
-                              <FontAwesomeIcon icon={faCity} className="me-1 text-muted" size="xs" />
-                              {entity.city_name}
-                            </span>
+                            <div className="text-gray-500 text-[11px] flex items-center gap-1">
+                              <FontAwesomeIcon icon={faMapMarkerAlt} className="text-[10px] text-[#7A0E2E]" />
+                              <span>{entity.city_name}</span>
+                            </div>
                           )}
                         </div>
                       </td>
 
                       {/* Appointment Time */}
-                      <td className="py-3">
-                        <div className="d-flex flex-column gap-0.5">
-                          <span
-                            className="badge rounded-pill px-2.5 py-1 fw-semibold d-inline-flex align-items-center align-self-start"
-                            style={{
-                              backgroundColor: "#F1F5F9",
-                              color: "#334155",
-                              border: "1px solid #CBD5E1",
-                              fontSize: "11px",
-                            }}
-                          >
-                            <FontAwesomeIcon icon={faClock} className="me-1 text-muted" />
-                            {schedule.timeslot || "Flexible"} {schedule.time_unit || ""}
-                          </span>
-                          <span className="text-muted small mt-1" style={{ fontSize: "12px" }}>
-                            <FontAwesomeIcon icon={faCalendarAlt} className="me-1 text-muted" size="xs" />
-                            {schedule.schedule_date || "Date N/A"}
-                          </span>
+                      <td className="py-3 px-3">
+                        <div className="text-xs font-semibold text-gray-800">
+                          {schedule.schedule_date || "—"}
+                        </div>
+                        <div className="text-gray-500 text-[11px] flex items-center gap-1 mt-0.5">
+                          <FontAwesomeIcon icon={faClock} className="text-[10px] text-amber-600" />
+                          <span>{schedule.timeslot || "Flexible Time"}</span>
                         </div>
                       </td>
 
                       {/* Call Sessions & Duration */}
-                      <td className="py-3">
+                      <td className="py-3 px-3">
                         {hasSessions ? (
-                          <div className="d-flex flex-column gap-1">
+                          <div className="flex flex-col gap-1">
                             {schedule.call_sessions.slice(0, 2).map((session, sIdx) => (
                               <div
                                 key={sIdx}
-                                className="p-1 px-2 rounded-2 bg-light border small"
-                                style={{ borderColor: "#E2E8F0", fontSize: "11px" }}
+                                className="px-2 py-0.5 rounded bg-gray-50 border border-gray-200 text-[11px]"
                               >
-                                <span className="fw-semibold text-dark">
+                                <span className="font-semibold text-gray-800">
                                   {session.call_duration || "0m 0s"}
                                 </span>
                                 {session.ended_at && (
-                                  <span className="text-muted ms-1" style={{ fontSize: "10px" }}>
+                                  <span className="text-gray-400 ms-1 text-[10px]">
                                     ({session.ended_at})
                                   </span>
                                 )}
                               </div>
                             ))}
                             {schedule.call_sessions.length > 2 && (
-                              <span className="text-muted small" style={{ fontSize: "10px" }}>
+                              <span className="text-gray-400 text-[10px]">
                                 +{schedule.call_sessions.length - 2} earlier session(s)
                               </span>
                             )}
                           </div>
                         ) : (
-                          <span
-                            className="badge rounded-pill px-2.5 py-1 text-muted fw-normal"
-                            style={{ backgroundColor: "#F8FAFC", border: "1px dashed #CBD5E1", fontSize: "11px" }}
-                          >
+                          <span className="badge bg-gray-50 text-gray-400 border border-dashed border-gray-300 px-2 py-0.5 font-normal text-[10.5px]">
                             No Calls Logged
                           </span>
                         )}
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Server Pagination Section */}
+        {/* ================================================================
+            PAGINATION SECTION
+        ================================================================= */}
         {!loading && pagination.total_pages > 1 && (
-          <div className="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3 border-top">
-            <span className="text-muted small">
-              Page <strong>{pagination.current_page}</strong> of{" "}
-              <strong>{pagination.total_pages}</strong> (Total{" "}
-              <strong>{pagination.total_count}</strong> tours)
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 mt-3 border-t border-gray-100 text-xs text-gray-500">
+            <div>
+              Showing page{" "}
+              <strong className="text-gray-900">{pagination.current_page}</strong> of{" "}
+              <strong className="text-gray-900">{pagination.total_pages}</strong> (Total{" "}
+              <strong className="text-gray-900">{pagination.total_count}</strong> tours)
+            </div>
 
-            <nav aria-label="Virtual tour pagination">
-              <ul className="pagination pagination-sm mb-0 gap-1">
-                <li
-                  className={`page-item ${
-                    pagination.current_page === 1 ? "disabled" : ""
-                  }`}
-                >
-                  <button
-                    className="page-link rounded-pill px-3"
-                    onClick={() => handlePageChange(pagination.current_page - 1)}
-                  >
-                    Previous
-                  </button>
-                </li>
+            <div className="flex items-center gap-2">
+              <nav aria-label="Virtual tour pagination">
+                <ul className="pagination pagination-sm mb-0 gap-1 align-items-center flex-wrap">
+                  {/* First */}
+                  <li className={`page-item ${pagination.current_page === 1 ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => handlePageChange(1)}
+                      disabled={pagination.current_page === 1}
+                      title="First Page"
+                    >
+                      « First
+                    </button>
+                  </li>
 
-                {Array.from(
-                  { length: Math.min(5, pagination.total_pages) },
-                  (_, i) => {
-                    let pageNum = i + 1;
-                    if (pagination.total_pages > 5 && pagination.current_page > 3) {
-                      pageNum = pagination.current_page - 2 + i;
-                      if (pageNum > pagination.total_pages) {
-                        pageNum = pagination.total_pages - (4 - i);
+                  {/* Prev */}
+                  <li className={`page-item ${pagination.current_page === 1 ? "disabled" : ""}`}>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => handlePageChange(pagination.current_page - 1)}
+                      disabled={pagination.current_page === 1}
+                      title="Previous Page"
+                    >
+                      ‹ Prev
+                    </button>
+                  </li>
+
+                  {/* Numeric Buttons */}
+                  {Array.from(
+                    { length: Math.min(5, pagination.total_pages) },
+                    (_, i) => {
+                      let pageNum = i + 1;
+                      if (pagination.total_pages > 5 && pagination.current_page > 3) {
+                        pageNum = pagination.current_page - 2 + i;
+                        if (pageNum > pagination.total_pages) {
+                          pageNum = pagination.total_pages - (4 - i);
+                        }
                       }
-                    }
-                    return (
-                      <li
-                        key={pageNum}
-                        className={`page-item ${
-                          pagination.current_page === pageNum ? "active" : ""
-                        }`}
-                      >
-                        <button
-                          className="page-link rounded-circle d-flex align-items-center justify-content-center"
-                          style={{
-                            width: "32px",
-                            height: "32px",
-                            backgroundColor:
-                              pagination.current_page === pageNum ? "#7A0E2E" : undefined,
-                            borderColor:
-                              pagination.current_page === pageNum ? "#7A0E2E" : undefined,
-                          }}
-                          onClick={() => handlePageChange(pageNum)}
+                      const isActive = pagination.current_page === pageNum;
+                      return (
+                        <li
+                          key={pageNum}
+                          className={`page-item ${isActive ? "active" : ""}`}
                         >
-                          {pageNum}
-                        </button>
-                      </li>
-                    );
-                  }
-                )}
+                          <button
+                            className="page-link rounded-2 fw-bold text-xs d-flex align-items-center justify-content-center shadow-xs"
+                            style={{
+                              minWidth: "30px",
+                              height: "30px",
+                              backgroundColor: isActive ? "#7A0E2E" : undefined,
+                              borderColor: isActive ? "#7A0E2E" : undefined,
+                              color: isActive ? "#FFFFFF" : undefined,
+                            }}
+                            onClick={() => handlePageChange(pageNum)}
+                          >
+                            {pageNum}
+                          </button>
+                        </li>
+                      );
+                    }
+                  )}
 
-                <li
-                  className={`page-item ${
-                    pagination.current_page === pagination.total_pages
-                      ? "disabled"
-                      : ""
-                  }`}
-                >
-                  <button
-                    className="page-link rounded-pill px-3"
-                    onClick={() => handlePageChange(pagination.current_page + 1)}
+                  {/* Next */}
+                  <li
+                    className={`page-item ${
+                      pagination.current_page === pagination.total_pages
+                        ? "disabled"
+                        : ""
+                    }`}
                   >
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav>
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => handlePageChange(pagination.current_page + 1)}
+                      disabled={pagination.current_page === pagination.total_pages}
+                      title="Next Page"
+                    >
+                      Next ›
+                    </button>
+                  </li>
+
+                  {/* Last */}
+                  <li
+                    className={`page-item ${
+                      pagination.current_page === pagination.total_pages
+                        ? "disabled"
+                        : ""
+                    }`}
+                  >
+                    <button
+                      className="page-link rounded-2 px-2.5 py-1 text-xs border"
+                      onClick={() => handlePageChange(pagination.total_pages)}
+                      disabled={pagination.current_page === pagination.total_pages}
+                      title="Last Page"
+                    >
+                      Last »
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
           </div>
         )}
       </div>

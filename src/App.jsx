@@ -196,6 +196,33 @@ const App = () => {
     return saved ? JSON.parse(saved) : DEFAULT_ADMIN_STAFF;
   });
 
+  const [dashboardDateRange, setDashboardDateRange] = useState(() => {
+    const saved = sessionStorage.getItem("dashboardDateRange");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (
+          parsed &&
+          parsed.preset &&
+          parsed.preset !== "this_month" &&
+          parsed.preset !== "last_6_months"
+        ) {
+          return parsed;
+        }
+      } catch (e) {}
+    }
+    return {
+      startDate: "",
+      endDate: "",
+      label: "All Time (Overall Data)",
+      preset: "all_time",
+    };
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem("dashboardDateRange", JSON.stringify(dashboardDateRange));
+  }, [dashboardDateRange]);
+
   /*
 |--------------------------------------------------------------------------
 | Permission Helper
@@ -260,6 +287,16 @@ const App = () => {
     sessionStorage.setItem("mockAdminStaff", JSON.stringify(adminStaff));
   }, [adminStaff]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const p = window.location.pathname;
+      if (p === "" || p === "/" || !p.startsWith("/admin")) {
+        const target = "/admin" + (p === "/" ? "" : p) + window.location.search + window.location.hash;
+        window.location.replace(target);
+      }
+    }
+  }, []);
+
   /*
   |--------------------------------------------------------------------------
   | App
@@ -294,6 +331,10 @@ const App = () => {
           // Admin Staff
           adminStaff,
           setAdminStaff,
+
+          // Dashboard Date Range Filter
+          dashboardDateRange,
+          setDashboardDateRange,
         }}
       >
 
@@ -341,15 +382,20 @@ const ConditionalContent = () => {
   |--------------------------------------------------------------------------
   */
 
-  if (location.pathname === "/") {
+  if (location.pathname === "/" || location.pathname === "") {
 
     return (
-      <div className="container-fluid w-100">
+      <div className="container-fluid w-100 p-0 m-0">
 
         <Routes>
 
           <Route
             path="/"
+            element={<LoginForm />}
+          />
+
+          <Route
+            path="*"
             element={<LoginForm />}
           />
 
@@ -432,6 +478,14 @@ const ConditionalContent = () => {
             </ModuleGuard>
           }
         />
+        <Route
+          path="/admin/admin"
+          element={
+            <ModuleGuard module="admin">
+              <Dashboard />
+            </ModuleGuard>
+          }
+        />
 
         {/* Hero Sliders / Mobile Banners / Advertising */}
         <Route
@@ -463,9 +517,17 @@ const ConditionalContent = () => {
           path="/profile"
           element={<Profile />}
         />
+        <Route
+          path="/admin/profile"
+          element={<Profile />}
+        />
 
         <Route
           path="/change-password"
+          element={<ChangePasswordForm />}
+        />
+        <Route
+          path="/admin/change-password"
           element={<ChangePasswordForm />}
         />
 
@@ -628,9 +690,21 @@ const ConditionalContent = () => {
             </ModuleGuard>
           }
         />
+        <Route
+          path="/admin/customers"
+          element={
+            <ModuleGuard module="users">
+              <CustomerList />
+            </ModuleGuard>
+          }
+        />
 
         <Route
           path="/developers"
+          element={<DeveloperList />}
+        />
+        <Route
+          path="/admin/developers"
           element={<DeveloperList />}
         />
 
@@ -701,6 +775,10 @@ const ConditionalContent = () => {
           path="/user-type/:user"
           element={<CategoryUsersList />}
         />
+        <Route
+          path="/admin/user-type/:user"
+          element={<CategoryUsersList />}
+        />
 
         <Route
           path="/properties/:user_id"
@@ -718,6 +796,10 @@ const ConditionalContent = () => {
 
         <Route
           path="/project-details/:id"
+          element={<ProjectDetail />}
+        />
+        <Route
+          path="/admin/project-details/:id"
           element={<ProjectDetail />}
         />
 
@@ -829,6 +911,17 @@ const ConditionalContent = () => {
 
         <Route
           path="/update-project/:id"
+          element={
+            <ModuleGuard
+              module="projects"
+              action="edit"
+            >
+              <UpdateProject />
+            </ModuleGuard>
+          }
+        />
+        <Route
+          path="/admin/update-project/:id"
           element={
             <ModuleGuard
               module="projects"

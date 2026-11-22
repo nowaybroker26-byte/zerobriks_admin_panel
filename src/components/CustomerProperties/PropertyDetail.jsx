@@ -1,91 +1,134 @@
-import { React, useState, useRef, useEffect } from "react";
-import { FaBed, FaBath, FaRupeeSign } from "react-icons/fa";
-import { MdLocationOn } from "react-icons/md";
-import { FaRulerCombined } from "react-icons/fa";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom"; // import for routing
-import { useParams, useLocation } from "react-router-dom";
-import ContactDetails from "../AdminProperties/ContactDetails";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import Swal from "sweetalert2";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  MapPin,
+  Building2,
+  Home,
+  Bed,
+  Bath,
+  Maximize2,
+  Calendar,
+  DollarSign,
+  User,
+  Phone,
+  Mail,
+  Copy,
+  Check,
+  Share2,
+  Eye,
+  ShieldCheck,
+  Layers,
+  Compass,
+  Car,
+  Zap,
+  Droplets,
+  Video,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Sparkles,
+  Award,
+  FileText,
+  KeyRound,
+  CheckSquare,
+  XSquare,
+} from "lucide-react";
+import { FaRupeeSign } from "react-icons/fa";
 import { PiCricketThin } from "react-icons/pi";
-
-import { useContext } from "react";
-// import { MyContext } from "../../context/MyContext";
 import { MyContext } from "../../App";
 
 const PropertyDetail = () => {
   const { can } = useContext(MyContext);
-  // const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [propertyDetails, setPropertyDetails] = useState({});
-  const userId = "67f0ff69d7908f15767d3e64";
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  const formatPrice = (price) => {
-    if (!price) return "";
-    if (price >= 10000000) {
-      return (price / 10000000).toFixed(1) + " Cr";
-    } else if (price >= 100000) {
-      return (price / 100000).toFixed(1) + " L";
-    } else if (price >= 1000) {
-      return (price / 1000).toFixed(1) + " K";
-    } else {
-      return price;
-    }
-  };
-
-  const convertToSquareFeet = (area, unit) => {
-    if (!area || !unit) return null;
-    const areaNum = parseFloat(area);
-    if (isNaN(areaNum)) return null;
-
-    switch (unit.toLowerCase()) {
-      case "sq ft":
-      case "sqft":
-      case "square feet":
-        return areaNum;
-      case "sq yd":
-      case "sqyd":
-      case "square yards":
-        return areaNum * 9;
-      case "sq mt":
-      case "sqmt":
-      case "square meters":
-        return areaNum * 10.7639;
-      case "acre":
-      case "acres":
-        return areaNum * 43560;
-      default:
-        return areaNum; // Return as-is if unit is unknown
-    }
-  };
-
-  const formatArea = (area, unit) => {
-    const convertedArea = convertToSquareFeet(area, unit);
-    return convertedArea ? `${Math.round(convertedArea)} Sq Ft` : null;
-  };
-  // for the image section with 'get_property_detail' api
-
-  const { id } = useParams();
-  const location = useLocation();
-  const property_owner_id = location.state?.property_owner_id;
-  const [aboutPropertyText, setAboutPropertyText] = useState("");
-
-  const [showAll, setShowAll] = useState(false);
-  const [allAmenities, setAllAmenities] = useState([]);
-  const visibleAmenities = showAll ? allAmenities : allAmenities.slice(0, 8);
-
+  const [propertyDetails, setPropertyDetails] = useState({});
   const [propertyImages, setPropertyImages] = useState([]);
-  const [showAllImages, setShowAllImages] = useState(false);
-  const [longitude, setLongitude] = useState(0);
-  const [latitude, setLatitude] = useState(0);
-  const [userDetails, setuserDetails] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [allAmenities, setAllAmenities] = useState([]);
+  const [userDetails, setUserDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
+  const [copiedField, setCopiedField] = useState("");
 
+  const userId = "67f0ff69d7908f15767d3e64";
 
-  const user_id = sessionStorage.getItem("accessToken");
+  // Format price helper
+  const formatPrice = (price) => {
+    if (!price && price !== 0) return "N/A";
+    const num = parseFloat(price);
+    if (isNaN(num)) return price;
+    if (num >= 10000000) {
+      return (num / 10000000).toFixed(2).replace(/\.00$/, "") + " Cr";
+    } else if (num >= 100000) {
+      return (num / 100000).toFixed(2).replace(/\.00$/, "") + " L";
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(2).replace(/\.00$/, "") + " K";
+    }
+    return num.toLocaleString("en-IN");
+  };
+
+  // Convert and format area
+  const formatArea = (area, unit) => {
+    if (!area) return null;
+    return `${area} ${unit || "Sq Ft"}`;
+  };
+
+  // Format date
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "N/A";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Normalize image URL
+  const getFullMediaUrl = (path) => {
+    if (!path) return "";
+    if (
+      path.startsWith("http://") ||
+      path.startsWith("https://") ||
+      path.startsWith("blob:") ||
+      path.startsWith("data:")
+    ) {
+      return path;
+    }
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || "";
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    if (cleanPath.startsWith("/media/")) {
+      return `${baseUrl}${cleanPath}`;
+    }
+    return `${baseUrl}/media${cleanPath}`;
+  };
+
+  // Copy to clipboard helper
+  const copyToClipboard = (text, fieldName) => {
+    if (!text) return;
+    navigator.clipboard.writeText(String(text));
+    setCopiedField(fieldName);
+    setTimeout(() => setCopiedField(""), 2000);
+  };
+
+  // Record view
   useEffect(() => {
-    const customer_id = user_id;
-
+    const customer_id = sessionStorage.getItem("accessToken");
     if (propertyDetails?._id && propertyDetails?.user_id && customer_id) {
       const formData = new FormData();
       formData.append("property_id", propertyDetails?._id);
@@ -93,793 +136,1166 @@ const PropertyDetail = () => {
       formData.append("customer_id", customer_id);
 
       axios
-        .post(`${process.env.REACT_APP_API_BASE_URL}/cust_api/add_view_property`, formData)
-        .then((res) => {
-          if (res.data?.status === 1) {
-            console.log("View property recorded");
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to record property view:", err);
-        });
+        .post(
+          `${process.env.REACT_APP_API_BASE_URL}/cust_api/add_view_property`,
+          formData
+        )
+        .catch(() => {});
     }
-  }, [propertyDetails?.propertyId, user_id]);
+  }, [propertyDetails?._id, propertyDetails?.user_id]);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  const fetchPropertyDetails = async (id) => {
+  // Fetch property details
+  const fetchPropertyDetails = async (propId) => {
+    setLoading(true);
     try {
       const res = await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/cust_api/get_property_details`,
-        { property_id: id, user_id: userId }
+        { property_id: propId, user_id: userId }
       );
 
       const data = res.data?.data;
-
-      if (data?.property_images?.length > 0) {
-        setPropertyImages(data.property_images);
-      } else {
-        setPropertyImages([]);
+      if (data) {
+        setPropertyDetails(data.property_details || {});
+        setPropertyImages(data.property_images || []);
+        setAllAmenities(data.amenities || []);
+        if (data.user_details && data.user_details.length > 0) {
+          setUserDetails(data.user_details[0]);
+        }
       }
-
-      if (data?.amenities?.length > 0) {
-        setAllAmenities(data.amenities);
-      } else {
-        setAllAmenities([]);
-      }
-
-      if (data?.property_details?.property_description) {
-        setAboutPropertyText(data.property_details.property_description);
-      } else {
-        setAboutPropertyText("");
-      }
-
-      if (data?.property_details) {
-        setPropertyDetails(data.property_details);
-      } else {
-        setPropertyDetails({});
-      }
-
-      if (data.user_details) {
-        setuserDetails(data.user_details[0]); // <-- Add this
-      }
-      console.log("userdetails", userDetails);
-
-      const pd = data.property_details;
-      setLatitude(pd.latitude);
-      setLongitude(pd.longitude);
     } catch (err) {
-      console.error("Error fetching property details", err);
-      setPropertyImages([]);
-      setAllAmenities([]);
-    }
-  };
-
-  useEffect(() => {
-    fetchPropertyDetails(id);
-  }, [id]);
-
-  // for send Enquiry 'add_property_enquiry' api
-
-  const [name, setName] = useState("");
-  const [message, setMessage] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [enquiryStatus, setEnquiryStatus] = useState(null); // success or error
-
-  // Existing useEffect (on mount)
-  useEffect(() => {
-    const mobileNumber = sessionStorage.getItem("Mobile_Number");
-    if (mobileNumber) {
-      setContactNumber(mobileNumber);
-    }
-  }, []);
-
-  //  New useEffect to check sessionStorage and update contact number after login
-  useEffect(() => {
-    let interval;
-
-    if (isLoginModalOpen === false && !contactNumber) {
-      interval = setInterval(() => {
-        const mobileNumber = sessionStorage.getItem("Mobile_Number");
-        if (mobileNumber) {
-          setContactNumber(mobileNumber);
-          clearInterval(interval); // Stop checking once we have it
-        }
-      }, 500); // Check every 500ms
-    }
-
-    return () => clearInterval(interval); // Cleanup
-  }, [isLoginModalOpen, contactNumber]);
-
-
-
-
-  //for the contact details
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-  const [openContactModalAfterLogin, setOpenContactModalAfterLogin] =
-    useState(false);
-
-
-  useState(false);
-  useEffect(() => {
-    if (sessionStorage.getItem("accessToken") && openContactModalAfterLogin) {
-      setIsContactModalOpen(true);
-      setOpenContactModalAfterLogin(false);
-    }
-  }, [openContactModalAfterLogin]);
-
-  // Add this line below all useState declarations or just before return:
-  const overviewFields = [
-    [
-      "Area",
-      propertyDetails?.area
-        ? formatArea(propertyDetails.area, propertyDetails.area_in)
-        : null,
-    ],
-    ["Status", propertyDetails?.available_status || null],
-    ["Developer", propertyDetails?.developer || null],
-    ["Additional Rooms", propertyDetails?.additional_rooms || null],
-    ["Project", propertyDetails?.property_name || null],
-    ["Facing", propertyDetails?.facing || null],
-    [
-      "Floor",
-      propertyDetails?.property_floor && propertyDetails?.total_floor
-        ? `${propertyDetails.property_floor} (Out of ${propertyDetails.total_floor} Floors)`
-        : null,
-    ],
-    ["Tower/Block", propertyDetails?.block || null],
-    ["Lifts", propertyDetails?.lift_availability || null],
-    ["Transaction Type", propertyDetails?.property_category_type || null],
-    ["Building Type", propertyDetails?.building_type || null],
-    ["Property Type", propertyDetails?.property_type || null],
-    ["Plot No.", propertyDetails?.plot_no || null],
-    ["Operating Since", propertyDetails?.operating_since || null],
-  ].filter(([_, value]) => value);
-
-  //more details
-
-   const moreDetailsFields = [
-    ["Food Available", propertyDetails?.food_available || null],
-    ["Notice Period", propertyDetails?.notice_period || null],
-    [
-      "Notice Period Other Days",
-      propertyDetails?.notice_period_other_days || null,
-    ],
-    [
-      "Electricity Charges Included",
-      propertyDetails?.electricity_charges_included || null,
-    ],
-    ["Total Beds", propertyDetails?.total_beds || null],
-    ["Additional Rooms", propertyDetails?.additional_rooms || null],
-    ["PG Rules", propertyDetails?.pg_rules || null],
-    ["Gate Closing Time", propertyDetails?.gate_closing_time || null],
-    ["Gate Closing Hour", propertyDetails?.gate_closing_hour || null],
-    ["PG Services", propertyDetails?.pg_services || null],
-    ["Age of Property", propertyDetails?.age_of_property || null],
-    ["Office Space Type", propertyDetails?.office_space_type || null],
-    ["Pantry", propertyDetails?.pantry || null],
-    ["Personal Washroom", propertyDetails?.personal_washroom || null],
-    ["Bathroom", propertyDetails?.bathroom || null],
-    ["Covered Parking", propertyDetails?.covered_parking || null],
-    ["Uncovered Parking", propertyDetails?.uncovered_parking || null],
-    ["Balcony", propertyDetails?.balcony || null],
-    ["Power Backup", propertyDetails?.power_backup || null],
-    ["Lift Availability", propertyDetails?.lift_availability || null],
-    ["Water Source", propertyDetails?.water_source || null],
-    ["View", propertyDetails?.view || null],
-    ["Flooring", propertyDetails?.flooring || null],
-    ["Total Floor", propertyDetails?.total_floor || null],
-    ["Property Floor", propertyDetails?.property_floor || null],
-    ["Facing", propertyDetails?.facing || null],
-    ["Ceiling Height", propertyDetails?.ceiling_height || null],
-    ["Parking Availability", propertyDetails?.parking_availability || null],
-    ["Min Lockin Period", propertyDetails?.min_lockin_period || null],
-    ["Seat Type", propertyDetails?.seat_type || null],
-    [
-      "Number of Seats Available",
-      propertyDetails?.number_of_seats_available || null,
-    ],
-    ["Plot No.", propertyDetails?.plot_no || null],
-    // ["Loan Availability", propertyDetails?.loan_availability || null],
-    //some other fileds
-    ["RERA ID", propertyDetails?.property_no || null],
-    ["Landmarks", propertyDetails?.landmarks || null],
-    ["Furnishing", propertyDetails?.furnished_type || null],
-    ["Near Landmark", propertyDetails?.near_landmark || null],
-    ["Flat Name", propertyDetails?.flat_name || null],
-    ["Maintenance Frequency", propertyDetails?.maintenance_frequency || null],
-    [
-      "Maintenance Included",
-      propertyDetails?.maintenance_included ? "Yes" : "No",
-    ],
-    ["Security Deposit Type", propertyDetails?.security_deposit_type || null],
-    [
-      "Available for Company Lease",
-      propertyDetails?.available_for_company_lease || null,
-    ],
-    ["Available For", propertyDetails?.available_for || null],
-    ["Suited For", propertyDetails?.suited_for || null],
-    ["Room Type", propertyDetails?.room_type || null],
-    ["Food Charges Included", propertyDetails?.food_charges_included || null],
-    // [
-    //   "Virtual Tour Availability",
-    //   propertyDetails?.virtual_tour_availability || null,
-    // ],
-    ["Property Category Type", propertyDetails?.property_category_type || null],
-    ["Rent", propertyDetails?.rent || null],
-    ["Rent Duration", propertyDetails?.rent_duration || null],
-    ["Property Added Date", propertyDetails?.property_added_date || null],
-    ["Possession Status", propertyDetails?.possession_status || null],
-    ["Possession Date", propertyDetails?.possession_date || null],
-    
-    ["Area Type", propertyDetails?.area_type || null],
-    ["Built up Area", propertyDetails?.area || null],
-    ["Built-up Area Unit", propertyDetails?.area_in || null],
-    ["Carpet Area", propertyDetails?.carpet_area || null],
-    ["Carpet Area Unit", propertyDetails?.carpet_area_unit || null],
-    ["Available Status", propertyDetails?.available_status || null],
-    ["Investment Options", propertyDetails?.investment_options || null],
-    ["All Inclusive Price", propertyDetails?.all_inclusive_price || null],
-    ["Price Negotiable", propertyDetails?.price_negotiable || null],
-    ["Tax And Goverment Charges", propertyDetails?.tax_and_goverment_charges || null],
-    ["Electricity And Water Charges", propertyDetails?.electricity_and_water_charges || null],
-    ["No Of Open Sides", propertyDetails?.no_of_open_sides || null],
-    ["No Of Peoples", propertyDetails?.no_of_peoples || null],
-["Type Of Construction", propertyDetails?.type_of_construction || null],
-["Quality Rating", propertyDetails?.quality_rating || null],
-["Central AC", propertyDetails?.central_AC || null],
-["Total Number Parking", propertyDetails?.total_number_parking || null],
-["Block", propertyDetails?.block || null],
-["Developer", propertyDetails?.developer || null],
-["Project Type", propertyDetails?.project_type || null],
-["Transaction Type", propertyDetails?.transaction_type || null],
-["Builder Floor Type", propertyDetails?.builder_floor_type || null],
-["Attached Bathroom", propertyDetails?.attached_bathroom || null],
-["Attached Balcony", propertyDetails?.attached_balcony || null],
-["Pantry Option", propertyDetails?.pantry_option || null],
-["Parking Types", propertyDetails?.parking_types || null],
-["Possession By", propertyDetails?.possession_by || null],
-["Property Dimensions Length", propertyDetails?.property_dimensions_length || null],
-["Property Dimensions Breadth", propertyDetails?.property_dimensions_breadth || null],
-["Length Of Land", propertyDetails?.length_of_land || null],
-["Breadth Of Land", propertyDetails?.breadthOfLand || null],
-["Open Sides Of Land", propertyDetails?.openSidesOfLand || null],
-["Construction On Land", propertyDetails?.constructionOnLand || null],
-["Selected Construction On Land", propertyDetails?.selectedConstructionOnLand || null],
-["Commercial Washroom", propertyDetails?.commercial_washroom || null],
-["Number Of Minimum Bathrooms", propertyDetails?.number_of_minimum_bathrooms || null],
-["Maintenance Cost", propertyDetails?.maintenance_cost || null],
-["Available Beds", propertyDetails?.available_beds || null],
-["Available From", propertyDetails?.available_from || null],
-["Available On", propertyDetails?.available_on || null],
-
-["No Of Cabines", propertyDetails?.no_of_cabines || null],
-["No Of Meeting Rooms", propertyDetails?.no_of_meeting_Rooms || null],
-["No Of Conference Room", propertyDetails?.no_of_conference_room || null],
-// ["Posted By Admin", propertyDetails?.posted_by_admin || null],
-// ["UPS", propertyDetails?.ups || null],
-// ["Oxygen Duct", propertyDetails?.oxygenDuct || null],
-// ["Central AC", propertyDetails?.central_AC || null],
-// ["Conference Room", propertyDetails?.conferenceRoom || null],
-// ["Washroom", propertyDetails?.washroom || null],
-// ["Washroom Check", propertyDetails?.washroom_Check || null],
-["Reception Area", propertyDetails?.reception_area || null],
-// ["Created At",
-//   propertyDetails?.created_at
-//     ? new Date(propertyDetails.created_at).toLocaleDateString("en-GB")
-//     : null,
-// ],
-
-// ["Updated At",
-//   propertyDetails?.updated_at
-//     ? new Date(propertyDetails.updated_at).toLocaleDateString("en-GB")
-//     : null,
-// ],
-  ].filter(([_, value]) => value);
-
-
-
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-
-  // Prevent background scrolling when modal is open
-  useEffect(() => {
-    if (isContactModalOpen || showAllImages) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-
-    // Cleanup when component unmounts
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isContactModalOpen, showAllImages]);
-
-  const handleApproval = async (approvalStatus, propertyId) => {
-    try {
-      setLoading(true); // Set loading true
-      const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/update_property_status`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            property_id: propertyId,
-            admin_approval: approvalStatus,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        // Update the property state with new approval status
-        setPropertyDetails((prevState) => ({
-          ...prevState,
-          admin_approval: approvalStatus,
-        }));
-        setLoading(false);
-      } else {
-        setLoading(false);
-      }
-    } catch (error) {
-      console.error("Error updating approval status:", error);
+      console.error("Error fetching property details:", err);
+    } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (id) {
+      fetchPropertyDetails(id);
+    }
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  // Approval handler
+  const handleApproval = async (newStatus) => {
+    if (!propertyDetails?._id) return;
+    try {
+      setActionLoading(true);
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/update_property_status`,
+        {
+          property_id: propertyDetails._id,
+          admin_approval: newStatus,
+        }
+      );
+
+      if (res.status === 200 || res.data?.status === 1) {
+        setPropertyDetails((prev) => ({
+          ...prev,
+          admin_approval: newStatus,
+        }));
+        Swal.fire({
+          icon: "success",
+          title: `Property marked as ${newStatus}`,
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 2500,
+          timerProgressBar: true,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Update Failed",
+          text: res.data?.message || "Could not update property status",
+        });
+      }
+    } catch (err) {
+      console.error("Error updating approval status:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "An error occurred while updating the status.",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Compile media list (cover + images + video)
+  const mediaList = useMemo(() => {
+    const list = [];
+    if (propertyDetails?.cover_image) {
+      list.push({
+        type: "image",
+        url: getFullMediaUrl(propertyDetails.cover_image),
+        label: "Cover Image",
+      });
+    }
+    if (propertyImages && propertyImages.length > 0) {
+      propertyImages.forEach((img, idx) => {
+        const url = getFullMediaUrl(img.image);
+        if (url && !list.some((item) => item.url === url)) {
+          list.push({
+            type: "image",
+            url: url,
+            label: `Photo ${idx + 1}`,
+          });
+        }
+      });
+    }
+    if (propertyDetails?.property_video) {
+      list.push({
+        type: "video",
+        url: getFullMediaUrl(propertyDetails.property_video),
+        label: "Property Video",
+      });
+    }
+    return list;
+  }, [propertyDetails?.cover_image, propertyDetails?.property_video, propertyImages]);
+
+  // Calculations for quick stats
+  const isRent = propertyDetails?.property_category_type === "Rent" || !!propertyDetails?.rent;
+  const displayPrice = isRent
+    ? propertyDetails?.rent
+    : propertyDetails?.property_price;
+  const priceUnit = isRent
+    ? propertyDetails?.rent_duration
+      ? `/${propertyDetails.rent_duration}`
+      : "/month"
+    : "";
+
+  const pricePerSqFt = useMemo(() => {
+    const p = parseFloat(propertyDetails?.property_price);
+    const a = parseFloat(propertyDetails?.area);
+    if (!isNaN(p) && !isNaN(a) && a > 0 && !isRent) {
+      return Math.round(p / a);
+    }
+    return null;
+  }, [propertyDetails?.property_price, propertyDetails?.area, isRent]);
+
+  // Approval badge renderer
+  const renderApprovalBadge = (status) => {
+    const s = String(status || "Pending").trim();
+    if (s.toLowerCase() === "approved") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <CheckCircle2 size={13} className="text-emerald-600" />
+          Approved
+        </span>
+      );
+    }
+    if (s.toLowerCase() === "disapproved") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+          <XCircle size={13} className="text-rose-600" />
+          Disapproved
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+        <Clock size={13} className="text-amber-600" />
+        Pending Review
+      </span>
+    );
+  };
+
+  // Structured spec groups
+  const specsDimensions = [
+    ["Built-up Area", formatArea(propertyDetails?.area, propertyDetails?.area_in)],
+    ["Carpet Area", formatArea(propertyDetails?.carpet_area, propertyDetails?.carpet_area_unit)],
+    ["Area Type", propertyDetails?.area_type],
+    ["Plot No.", propertyDetails?.plot_no],
+    ["Property No. / RERA", propertyDetails?.property_no],
+    ["Dimensions (L x B)", propertyDetails?.property_dimensions_length && propertyDetails?.property_dimensions_breadth
+      ? `${propertyDetails.property_dimensions_length} ft × ${propertyDetails.property_dimensions_breadth} ft`
+      : null],
+    ["Land Length", propertyDetails?.length_of_land],
+    ["Land Breadth", propertyDetails?.breadthOfLand],
+    ["Open Sides of Land", propertyDetails?.openSidesOfLand || propertyDetails?.no_of_open_sides],
+    ["Construction on Land", propertyDetails?.constructionOnLand || propertyDetails?.selectedConstructionOnLand],
+    ["Ceiling Height", propertyDetails?.ceiling_height ? `${propertyDetails.ceiling_height} ft` : null],
+  ].filter(([_, v]) => v !== null && v !== undefined && v !== "" && v !== "NA" && v !== "N/A");
+
+  const specsFinancials = [
+    ["Transaction Category", propertyDetails?.property_category_type],
+    ["Base Price", propertyDetails?.property_price ? `₹${formatPrice(propertyDetails.property_price)}` : null],
+    ["Rent", propertyDetails?.rent ? `₹${formatPrice(propertyDetails.rent)} ${priceUnit}` : null],
+    ["Maintenance Cost", propertyDetails?.maintenance_cost ? `₹${propertyDetails.maintenance_cost}` : null],
+    ["Maintenance Frequency", propertyDetails?.maintenance_frequency],
+    ["Maintenance Included", propertyDetails?.maintenance_included !== undefined ? (propertyDetails.maintenance_included ? "Yes" : "No") : null],
+    ["Security Deposit Type", propertyDetails?.security_deposit_type],
+    ["Custom Deposit Amount", propertyDetails?.custom_deposit_amount ? `₹${formatPrice(propertyDetails.custom_deposit_amount)}` : null],
+    ["Price Negotiable", propertyDetails?.price_negotiable],
+    ["All Inclusive Price", propertyDetails?.all_inclusive_price],
+    ["Tax & Govt Charges Included", propertyDetails?.tax_and_goverment_charges],
+    ["Electricity & Water Charges", propertyDetails?.electricity_and_water_charges],
+    ["Price Onwards", propertyDetails?.price_onwards],
+    ["Investment Options", propertyDetails?.investment_options],
+    ["Loan Availability", propertyDetails?.loan_availability],
+  ].filter(([_, v]) => v !== null && v !== undefined && v !== "" && v !== "NA" && v !== "N/A");
+
+  const specsLayout = [
+    ["BHK Configuration", propertyDetails?.bhk_type],
+    ["Building Type", propertyDetails?.building_type],
+    ["Property Type", propertyDetails?.property_type],
+    ["Office / Space Type", propertyDetails?.office_space_type || propertyDetails?.office_type],
+    ["Builder Floor Type", propertyDetails?.builder_floor_type],
+    ["Floor", propertyDetails?.property_floor && propertyDetails?.total_floor
+      ? `${propertyDetails.property_floor} of ${propertyDetails.total_floor} Floors`
+      : propertyDetails?.property_floor],
+    ["Total Floors", propertyDetails?.total_floor],
+    ["Tower / Block", propertyDetails?.block],
+    ["Bathrooms", propertyDetails?.bathroom],
+    ["Attached Bathrooms", propertyDetails?.attached_bathroom],
+    ["Balconies", propertyDetails?.balcony],
+    ["Attached Balconies", propertyDetails?.attached_balcony],
+    ["Additional Rooms", propertyDetails?.additional_rooms],
+    ["Total Rooms", propertyDetails?.total_number_of_rooms],
+    ["Pantry Option", propertyDetails?.pantry_option || propertyDetails?.pantry],
+    ["Personal Washroom", propertyDetails?.personal_washroom],
+    ["Commercial Washroom", propertyDetails?.commercial_washroom],
+    ["Reception Area", propertyDetails?.reception_area],
+    ["Cabins", propertyDetails?.no_of_cabines],
+    ["Meeting Rooms", propertyDetails?.no_of_meeting_Rooms],
+    ["Conference Room", propertyDetails?.no_of_conference_room || propertyDetails?.conferenceRoom],
+    ["Seat Type", propertyDetails?.seat_type],
+    ["Seats Available", propertyDetails?.number_of_seats_available],
+  ].filter(([_, v]) => v !== null && v !== undefined && v !== "" && v !== "NA" && v !== "N/A");
+
+  const specsFeatures = [
+    ["Furnishing Status", propertyDetails?.furnished_type],
+    ["Facing Direction", propertyDetails?.facing],
+    ["View", propertyDetails?.view],
+    ["Flooring Type", propertyDetails?.flooring],
+    ["Power Backup", propertyDetails?.power_backup],
+    ["Lift Availability", propertyDetails?.lift_availability],
+    ["Water Source", propertyDetails?.water_source],
+    ["Central AC", propertyDetails?.central_AC || propertyDetails?.centralAC],
+    ["Construction Type", propertyDetails?.type_of_construction],
+    ["Quality Rating", propertyDetails?.quality_rating],
+    ["UPS Backup", propertyDetails?.ups],
+    ["Oxygen Duct", propertyDetails?.oxygenDuct],
+    ["Virtual Tour", propertyDetails?.virtual_tour_availability],
+  ].filter(([_, v]) => v !== null && v !== undefined && v !== "" && v !== "NA" && v !== "N/A");
+
+  const specsParking = [
+    ["Parking Availability", propertyDetails?.parking_availability],
+    ["Total Parking Spaces", propertyDetails?.total_number_parking],
+    ["Covered Parking", propertyDetails?.covered_parking],
+    ["Open / Uncovered Parking", propertyDetails?.uncovered_parking],
+    ["Parking Types", propertyDetails?.parking_types],
+  ].filter(([_, v]) => v !== null && v !== undefined && v !== "" && v !== "NA" && v !== "N/A");
+
+  const specsStatus = [
+    ["Availability Status", propertyDetails?.available_status],
+    ["Possession Status", propertyDetails?.possession_status],
+    ["Possession Date", formatDate(propertyDetails?.possession_date)],
+    ["Possession By", propertyDetails?.possession_by],
+    ["Available From", propertyDetails?.available_from || propertyDetails?.available_on],
+    ["Age of Property", propertyDetails?.age_of_property ? `${propertyDetails.age_of_property} Years` : null],
+    ["Operating Since", propertyDetails?.operating_since ? `${propertyDetails.operating_since} Years` : null],
+    ["Immediate Available", propertyDetails?.isImmediateAvailable],
+    ["Ownership", propertyDetails?.ownership],
+    ["Listed Date", formatDate(propertyDetails?.property_added_date || propertyDetails?.created_at)],
+  ].filter(([_, v]) => v !== null && v !== undefined && v !== "" && v !== "NA" && v !== "N/A");
+
+  const specsRental = [
+    ["Available For", propertyDetails?.available_for],
+    ["Suited For", propertyDetails?.suited_for],
+    ["Room Type", propertyDetails?.room_type],
+    ["Total Beds", propertyDetails?.total_beds],
+    ["Available Beds", propertyDetails?.available_beds],
+    ["Food Available", propertyDetails?.food_available],
+    ["Food Charges Included", propertyDetails?.food_charges_included],
+    ["Notice Period", propertyDetails?.notice_period ? `${propertyDetails.notice_period} Days` : null],
+    ["Notice Period Other Days", propertyDetails?.notice_period_other_days],
+    ["Electricity Included", propertyDetails?.electricity_charges_included],
+    ["Gate Closing Time", propertyDetails?.gate_closing_time],
+    ["Gate Closing Hour", propertyDetails?.gate_closing_hour],
+    ["PG Rules", propertyDetails?.pg_rules],
+    ["PG Services", propertyDetails?.pg_services],
+    ["Min Lock-in Period", propertyDetails?.min_lockin_period],
+    ["Available for Company Lease", propertyDetails?.available_for_company_lease],
+  ].filter(([_, v]) => v !== null && v !== undefined && v !== "" && v !== "NA" && v !== "N/A");
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-7xl mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-rose-200 border-t-[#7A0E2E] rounded-full animate-spin"></div>
+        <p className="mt-4 text-sm font-semibold text-gray-600">
+          Loading Property Dossier...
+        </p>
+      </div>
+    );
+  }
+
+  const activeMedia = mediaList[activeMediaIndex] || mediaList[0];
 
   return (
-    <div className="w-100 container-fluid mt-28">
-      {/* Breadcrumb aligned right */}
-      <nav className="flex justify-end mb-4" aria-label="Breadcrumb">
-        <ol className="flex flex-wrap items-center space-x-2 text-sm md:space-x-4">
-          <li>
-            <Link
-              to="/properties"
-              className="font-medium text-blue-600 transition-colors hover:underline"
-            >
-              Go To Properties
-            </Link>
-          </li>
-
-          <li>
-            <span className="inline-block px-3 py-1 text-base font-bold text-gray-800 rounded-full">
-              Property Details Page
-            </span>
-          </li>
-
-          <li className="text-gray-400">/</li>
-        </ol>
-      </nav>
-
-      <div className="max-w-full p-4 mx-auto bg-white sm:px-16">
-        <div className="p-4 text-end">
-          {/* Approve/Disapprove Buttons */}
-          {/* {propertyDetails.admin_approval === "Pending" ? (
-            <div>
-              <button
-                className="btn btn-success me-2"
-                onClick={() => handleApproval("Approved", propertyDetails._id)}
-                disabled={loading}
-              >
-                {loading ? "Processing..." : "Approve"}
-              </button>
-              <button
-                className="btn btn-danger"
-                onClick={() => handleApproval("Disapproved", propertyDetails._id)}
-                disabled={loading}
-              >
-                {loading ? "Processing..." : "Disapprove"}
-              </button>
+    <div className="w-full max-w-7xl mx-auto px-4 py-6 space-y-6">
+      {/* Top Navigation & Breadcrumbs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-200/80">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-[#7A0E2E] transition-colors shadow-sm"
+            title="Go Back"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+              <Link to="/admin" className="hover:text-[#7A0E2E]">Dashboard</Link>
+              <span>/</span>
+              <Link to="/properties" className="hover:text-[#7A0E2E]">Properties</Link>
+              <span>/</span>
+              <span className="text-gray-800 font-semibold">Property Dossier</span>
             </div>
-          ) : propertyDetails.admin_approval === "Approved" ? (
-            <button
-              className="btn btn-danger"
-              onClick={() => handleApproval("Disapproved", propertyDetails._id)}
-              disabled={loading}
-            >
-              {loading ? "Processing..." : "Disapprove"}
-            </button>
-          ) : (
-            <button
-              className="btn btn-success"
-              onClick={() => handleApproval("Approved", propertyDetails._id)}
-              disabled={loading}
-            >
-              {loading ? "Processing..." : "Approve"}
-            </button>
-          )} */}
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5">
+              {propertyDetails?.property_name || "Property Details"}
+            </h1>
+          </div>
+        </div>
 
-          {/* Approve/Disapprove Buttons */}
+        {/* Quick Admin Actions & Status */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {renderApprovalBadge(propertyDetails?.admin_approval)}
+
           {(can("myInventory", "approve") ||
             can("inquiries", "approve") ||
             can("admin", "approve")) && (
-            <>
-              {propertyDetails.admin_approval === "Pending" ? (
-                <div>
-                  <button
-                    className="btn btn-success me-2"
-                    onClick={() =>
-                      handleApproval("Approved", propertyDetails._id)
-                    }
-                    disabled={loading}
-                  >
-                    {loading ? "Processing..." : "Approve"}
-                  </button>
-
-                  <button
-                    className="btn btn-danger"
-                    onClick={() =>
-                      handleApproval("Disapproved", propertyDetails._id)
-                    }
-                    disabled={loading}
-                  >
-                    {loading ? "Processing..." : "Disapprove"}
-                  </button>
-                </div>
-              ) : propertyDetails.admin_approval === "Approved" ? (
-                <button
-                  className="btn btn-danger"
-                  onClick={() =>
-                    handleApproval("Disapproved", propertyDetails._id)
-                  }
-                  disabled={loading}
-                >
-                  {loading ? "Processing..." : "Disapprove"}
-                </button>
-              ) : (
-                <button
-                  className="btn btn-success"
-                  onClick={() =>
-                    handleApproval("Approved", propertyDetails._id)
-                  }
-                  disabled={loading}
-                >
-                  {loading ? "Processing..." : "Approve"}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Property Details Section */}
-        <div className="relative w-full h-auto p-2 mb-4 rounded-lg shadow-sm bg-purple-50">
-          {(propertyDetails?.property_price || propertyDetails?.rent) && (
-            <div className="absolute flex items-center space-x-4 top-4 right-4">
-              <p className="flex items-center mt-5 text-3xl font-bold text-purple-600">
-                <FaRupeeSign className="mr-2" />
-                {propertyDetails?.property_category_type === "Rent" ? (
-                  <>
-                    {formatPrice(propertyDetails?.rent)}{" "}
-                    <span className="ml-1 text-xl gray-700 text-">
-                      {propertyDetails?.rent_duration
-                        ? ` / ${propertyDetails.rent_duration}`
-                        : ""}
-                    </span>
-                  </>
-                ) : (
-                  formatPrice(propertyDetails?.property_price)
-                )}
-              </p>
+            <div className="inline-flex rounded-lg shadow-sm border border-gray-200 bg-white p-0.5">
+              <button
+                type="button"
+                disabled={actionLoading || propertyDetails?.admin_approval === "Approved"}
+                onClick={() => handleApproval("Approved")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  propertyDetails?.admin_approval === "Approved"
+                    ? "bg-emerald-600 text-white shadow-xs cursor-default"
+                    : "text-emerald-700 hover:bg-emerald-50"
+                }`}
+              >
+                <CheckCircle2 size={13} />
+                Approve
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading || propertyDetails?.admin_approval === "Disapproved"}
+                onClick={() => handleApproval("Disapproved")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  propertyDetails?.admin_approval === "Disapproved"
+                    ? "bg-rose-600 text-white shadow-xs cursor-default"
+                    : "text-rose-700 hover:bg-rose-50"
+                }`}
+              >
+                <XCircle size={13} />
+                Disapprove
+              </button>
             </div>
           )}
 
-          {/* <h2 className="mt-2 ml-6 text-3xl font-normal">
-                    {propertyDetails?.bhk_type ? `${propertyDetails.bhk_type} ` : ""}
-                    {propertyDetails?.area ? `${propertyDetails.area} Sq-ft ` : ""}
-                    {propertyDetails?.property_type
-                      ? `${propertyDetails.property_type} `
-                      : ""}
-                    for {propertyDetails?.property_category_type
-                      ? `${propertyDetails.property_category_type}`
-                      : ""}
-                  </h2> */}
+          <button
+            onClick={() => copyToClipboard(window.location.href, "url")}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 text-xs font-medium hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            {copiedField === "url" ? (
+              <>
+                <Check size={13} className="text-emerald-600" />
+                <span>Link Copied</span>
+              </>
+            ) : (
+              <>
+                <Share2 size={13} />
+                <span>Share</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
 
-          <h2 className="mt-2 ml-6 text-3xl font-normal">
-            {propertyDetails?.property_name
-              ? `${propertyDetails.property_name} `
-              : ""}
-          </h2>
-
-          <p className="ml-6 text-xl font-bold text-gray-700 break-words whitespace-normal max-w-[80ch]">
-            <img
-              src="/admin/image/address_icon.png"
-              alt="Address Icon"
-              className="inline-block w-5 h-5 mr-2"
-            />
-            {propertyDetails?.address || "Address N/A"}
-          </p>
-          <div className="flex items-center mt-6 ml-5 space-x-8">
-            {propertyDetails?.bhk_type && (
-              <div className="flex items-center space-x-2">
-                <FaBed className="text-2xl text-purple-600" />
-                <span className="text-lg font-bold">
+      {/* Hero Header Card */}
+      <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5 md:p-6">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+          {/* Left Title and Tags */}
+          <div className="space-y-3 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider bg-rose-50 text-[#7A0E2E] border border-rose-200">
+                {propertyDetails?.property_category_type || "Sale"}
+              </span>
+              {propertyDetails?.property_type && (
+                <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                  {propertyDetails.property_type}
+                </span>
+              )}
+              {propertyDetails?.bhk_type && (
+                <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
                   {propertyDetails.bhk_type}
                 </span>
-              </div>
-            )}
-
-            {propertyDetails?.area && (
-              <div className="flex items-center space-x-2">
-                <FaRulerCombined className="text-2xl text-purple-600" />
-                <span className="text-lg font-bold">
-                  {formatArea(propertyDetails.area, propertyDetails.area_in)}
+              )}
+              {propertyDetails?.furnished_type && (
+                <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                  {propertyDetails.furnished_type}
                 </span>
-              </div>
-            )}
-
-            {propertyDetails?.bathroom && (
-              <div className="flex items-center space-x-2">
-                <FaBath className="text-2xl text-purple-600" />
-                <span className="text-lg font-bold">
-                  {propertyDetails.bathroom} Bathroom
+              )}
+              {propertyDetails?.mark_as_featured === "Yes" && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                  <Sparkles size={12} className="text-amber-500" />
+                  Featured
                 </span>
-              </div>
-            )}
+              )}
+            </div>
+
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
+                {propertyDetails?.property_name || "Exclusive Property"}
+              </h2>
+              <p className="flex items-center gap-1.5 text-sm text-gray-600 mt-1">
+                <MapPin size={15} className="text-[#7A0E2E] shrink-0" />
+                <span>
+                  {propertyDetails?.address || "Address Not Available"}
+                  {propertyDetails?.city_name && `, ${propertyDetails.city_name}`}
+                  {propertyDetails?.state && `, ${propertyDetails.state}`}
+                  {propertyDetails?.zip_code && ` - ${propertyDetails.zip_code}`}
+                </span>
+              </p>
+            </div>
+
+            {/* Micro Details Chips */}
+            <div className="flex flex-wrap items-center gap-3 pt-2 text-xs text-gray-600">
+              <span className="inline-flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200/60">
+                <Calendar size={13} className="text-gray-400" />
+                Listed: {formatDate(propertyDetails?.property_added_date || propertyDetails?.created_at)}
+              </span>
+              <span className="inline-flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200/60">
+                <User size={13} className="text-gray-400" />
+                Listed By: {propertyDetails?.user_type || userDetails?.user_type || "Owner"}
+              </span>
+              <span className="inline-flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200/60 font-mono">
+                ID: {propertyDetails?._id || id}
+              </span>
+            </div>
           </div>
 
-          <div className="flex justify-end mt-6 space-x-4">
-            <div
-              className="w-full px-3 py-1 text-sm text-white bg-purple-600 rounded-lg cursor-pointer sm:px-4 sm:py-2 sm:text-lg sm:w-auto"
-              onClick={() => {
-                setIsContactModalOpen(true);
-              }}
-            >
-              Contact Details
-            </div>
-            {isContactModalOpen &&
-              userDetails &&
-              !Array.isArray(userDetails) &&
-              userDetails.full_name && (
-                <ContactDetails
-                  onClose={() => setIsContactModalOpen(false)}
-                  fullName={userDetails.full_name || "N/A"}
-                  mobile={userDetails.mobile_number || "N/A"}
-                />
+          {/* Right Price Card */}
+          <div className="lg:text-right bg-gradient-to-br from-rose-50/50 to-amber-50/30 p-4 rounded-xl border border-rose-100 flex flex-col justify-center min-w-[240px]">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              {isRent ? "Rental Value" : "Asking Price"}
+            </span>
+            <div className="flex items-baseline lg:justify-end gap-1 mt-1">
+              <span className="text-2xl md:text-3xl font-extrabold text-[#7A0E2E]">
+                ₹{formatPrice(displayPrice)}
+              </span>
+              {priceUnit && (
+                <span className="text-sm font-semibold text-gray-600">
+                  {priceUnit}
+                </span>
               )}
+            </div>
+
+            {pricePerSqFt && (
+              <span className="text-xs font-medium text-gray-600 mt-1">
+                ₹{pricePerSqFt.toLocaleString("en-IN")} / Sq Ft
+              </span>
+            )}
+
+            <div className="flex flex-wrap lg:justify-end gap-1.5 mt-2.5">
+              {propertyDetails?.price_negotiable === "Yes" && (
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-100/70 text-emerald-800">
+                  Negotiable
+                </span>
+              )}
+              {propertyDetails?.all_inclusive_price === "Yes" && (
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-blue-100/70 text-blue-800">
+                  All Inclusive
+                </span>
+              )}
+              {propertyDetails?.maintenance_included && (
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-purple-100/70 text-purple-800">
+                  Maintenance Incl.
+                </span>
+              )}
+            </div>
           </div>
         </div>
-        {/* Image Section & Contact Form */}
-        <div className=" grid grid-cols-1 md:grid-cols-2 gap-2 h-auto md:h-[550px]">
-          {/* Left Side Image Section */}
-          <div className="grid grid-cols-1 col-span-2 gap-1 md:grid-cols-1">
-            {/* Image Section */}
-            <div className="flex flex-col gap-2 mt-6 md:flex-row">
-              {propertyImages.length === 0 ? (
-                <div className="w-full">
-                  <img
-                    src={propertyDetails?.cover_image}
-                    alt="Main"
-                    className="rounded-2xl w-full h-64 md:h-[400px] object-cover"
-                  />
-                </div>
-              ) : (
-                <>
-                  {/* Left Side - Main Image */}
-                  <div className="md:basis-[60%]">
-                    <img
-                      src={propertyDetails.cover_image}
-                      alt="Main"
-                      className="rounded-2xl w-full h-64 md:h-[400px] object-cover"
-                    />
-                  </div>
 
-                  {/* Right Side - Video on Top + One Image Below */}
-                  <div className="md:basis-[40%] flex flex-col justify-start gap-2 px-2">
-                    {/* Property Main Image Section */}
-                    <div
-                      className="relative cursor-pointer"
-                      onClick={() => setShowAllImages(true)}
-                    >
-                      {propertyImages.length > 0 && (
-                        <img
-                          src={propertyImages[0].image}
-                          alt="Preview"
-                          className="rounded-2xl w-full h-48 md:h-[195px] object-cover"
-                        />
-                      )}
-                    </div>
+        {/* Highlight Stats Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-6 pt-5 border-t border-gray-100">
+          <div className="p-3 rounded-lg bg-gray-50 border border-gray-100 text-center sm:text-left">
+            <span className="text-xs text-gray-500 flex items-center justify-center sm:justify-start gap-1">
+              <Home size={13} className="text-[#7A0E2E]" /> BHK
+            </span>
+            <p className="text-base font-bold text-gray-900 mt-0.5">
+              {propertyDetails?.bhk_type || "N/A"}
+            </p>
+          </div>
 
-                    {/* Property Additional Images Section */}
-                    {propertyImages.length > 1 && (
-                      <div className="grid grid-cols-1 gap-2 mt-2">
-                        {(() => {
-                          const filteredImages = propertyImages.filter(
-                            (img) => img.image !== propertyDetails.cover_image,
-                          );
+          <div className="p-3 rounded-lg bg-gray-50 border border-gray-100 text-center sm:text-left">
+            <span className="text-xs text-gray-500 flex items-center justify-center sm:justify-start gap-1">
+              <Maximize2 size={13} className="text-[#7A0E2E]" /> Super Area
+            </span>
+            <p className="text-base font-bold text-gray-900 mt-0.5">
+              {propertyDetails?.area ? `${propertyDetails.area} ${propertyDetails.area_in || "Sq Ft"}` : "N/A"}
+            </p>
+          </div>
 
-                          // Case 1: No images after filtering → Don’t render
-                          if (filteredImages.length === 0) {
-                            return null;
-                          }
+          <div className="p-3 rounded-lg bg-gray-50 border border-gray-100 text-center sm:text-left">
+            <span className="text-xs text-gray-500 flex items-center justify-center sm:justify-start gap-1">
+              <Bath size={13} className="text-[#7A0E2E]" /> Bathrooms
+            </span>
+            <p className="text-base font-bold text-gray-900 mt-0.5">
+              {propertyDetails?.bathroom || "N/A"}
+            </p>
+          </div>
 
-                          // Case 2: Only one image → Don’t render second section
-                          if (filteredImages.length === 1) {
-                            return null;
-                          }
+          <div className="p-3 rounded-lg bg-gray-50 border border-gray-100 text-center sm:text-left">
+            <span className="text-xs text-gray-500 flex items-center justify-center sm:justify-start gap-1">
+              <Layers size={13} className="text-[#7A0E2E]" /> Floor
+            </span>
+            <p className="text-base font-bold text-gray-900 mt-0.5 truncate" title={propertyDetails?.property_floor}>
+              {propertyDetails?.property_floor && propertyDetails?.total_floor
+                ? `${propertyDetails.property_floor} / ${propertyDetails.total_floor}`
+                : propertyDetails?.property_floor || "N/A"}
+            </p>
+          </div>
 
-                          // Case 3: More than one image → Render the 2nd preview + overlay
-                          return (
-                            <div
-                              className="relative cursor-pointer"
-                              onClick={() => setShowAllImages(true)}
-                            >
-                              <img
-                                src={filteredImages[1]?.image}
-                                alt="Preview"
-                                className="rounded-2xl w-full h-48 md:h-[190px] object-cover"
-                              />
-                              {filteredImages.length > 1 && (
-                                <div className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-white bg-black bg-opacity-50 rounded-2xl">
-                                  {(() => {
-                                    const count =
-                                      filteredImages.length -
-                                      1 +
-                                      (propertyDetails?.property_video ? 1 : 0);
+          <div className="p-3 rounded-lg bg-gray-50 border border-gray-100 text-center sm:text-left">
+            <span className="text-xs text-gray-500 flex items-center justify-center sm:justify-start gap-1">
+              <Compass size={13} className="text-[#7A0E2E]" /> Facing
+            </span>
+            <p className="text-base font-bold text-gray-900 mt-0.5">
+              {propertyDetails?.facing || "N/A"}
+            </p>
+          </div>
 
-                                    return count > 0 ? (
-                                      <div className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-white bg-black bg-opacity-50 rounded-2xl">
-                                        +{count} View All
-                                      </div>
-                                    ) : null;
-                                  })()}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    )}
-                  </div>
-                </>
+          <div className="p-3 rounded-lg bg-gray-50 border border-gray-100 text-center sm:text-left">
+            <span className="text-xs text-gray-500 flex items-center justify-center sm:justify-start gap-1">
+              <CheckCircle2 size={13} className="text-[#7A0E2E]" /> Status
+            </span>
+            <p className="text-base font-bold text-gray-900 mt-0.5">
+              {propertyDetails?.available_status || "Available"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Grid: Media & Specs on Left, Contact & Meta on Right */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column (2 Cols) */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Interactive Media Showcase */}
+          <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-4 overflow-hidden">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <span>Property Gallery</span>
+                <span className="text-xs font-normal text-gray-500">
+                  ({mediaList.length} media available)
+                </span>
+              </h3>
+              {mediaList.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowGalleryModal(true)}
+                  className="text-xs font-semibold text-[#7A0E2E] hover:underline flex items-center gap-1"
+                >
+                  <Eye size={13} />
+                  View Lightbox
+                </button>
               )}
             </div>
 
-            {/* Add the Overview Component Below */}
-            {overviewFields.length > 0 && (
-              <div className="w-full p-4 bg-white rounded-lg shadow-sm">
-                <h3 className="mb-4 text-3xl font-semibold">Overview</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 text-[18px]">
-                  {overviewFields.map(([key, value], index) => (
-                    <div
-                      key={index}
-                      className="flex justify-start p-2 border-gray-200"
-                    >
-                      <span className="w-1/2 text-gray-500">{key}</span>
-                      <span>{value}</span>
+            {/* Active Display Stage */}
+            <div className="relative w-full h-72 sm:h-96 md:h-[420px] bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+              {mediaList.length === 0 ? (
+                <div className="text-center text-gray-400 p-6">
+                  <Building2 size={48} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No images or videos uploaded for this property</p>
+                </div>
+              ) : activeMedia?.type === "video" ? (
+                <video
+                  controls
+                  className="w-full h-full object-contain"
+                  src={activeMedia.url}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <img
+                  src={activeMedia?.url}
+                  alt={activeMedia?.label || "Property Preview"}
+                  className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
+                  onClick={() => setShowGalleryModal(true)}
+                />
+              )}
+
+              {/* Prev / Next Buttons */}
+              {mediaList.length > 1 && (
+                <>
+                  <button
+                    onClick={() =>
+                      setActiveMediaIndex((prev) =>
+                        prev === 0 ? mediaList.length - 1 : prev - 1
+                      )
+                    }
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors shadow-md"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    onClick={() =>
+                      setActiveMediaIndex((prev) =>
+                        prev === mediaList.length - 1 ? 0 : prev + 1
+                      )
+                    }
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors shadow-md"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </>
+              )}
+
+              <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded bg-black/70 text-white text-xs font-mono">
+                {activeMediaIndex + 1} / {mediaList.length}
+              </div>
+            </div>
+
+            {/* Thumbnail Strip */}
+            {mediaList.length > 1 && (
+              <div className="flex gap-2.5 mt-3 overflow-x-auto pb-1 scrollbar-thin">
+                {mediaList.map((item, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveMediaIndex(idx)}
+                    className={`relative shrink-0 w-20 h-16 rounded-md overflow-hidden border-2 transition-all ${
+                      activeMediaIndex === idx
+                        ? "border-[#7A0E2E] ring-2 ring-rose-200"
+                        : "border-gray-200 opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    {item.type === "video" ? (
+                      <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white">
+                        <Video size={18} />
+                      </div>
+                    ) : (
+                      <img
+                        src={item.url}
+                        alt={`thumb-${idx}`}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Detailed Specifications Cards */}
+          <div className="space-y-6">
+            {/* Dimensions & Structure */}
+            {specsDimensions.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5">
+                <h3 className="text-base font-bold text-gray-900 pb-3 mb-4 border-b border-gray-100 flex items-center gap-2">
+                  <Maximize2 size={16} className="text-[#7A0E2E]" />
+                  <span>Area, Dimensions & Land Details</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  {specsDimensions.map(([label, value], i) => (
+                    <div key={i} className="flex justify-between py-1.5 border-b border-gray-50 text-sm">
+                      <span className="text-gray-500">{label}</span>
+                      <span className="font-semibold text-gray-900 text-right">{value}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* More Details Section */}
-            {moreDetailsFields.length > 0 && (
-              <div className="w-full p-4 mt-4 bg-white rounded-lg shadow-sm">
-                <h3 className="mb-4 ml-2 text-3xl font-semibold">
-                  More Details
+            {/* Financial Terms & Maintenance */}
+            {specsFinancials.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5">
+                <h3 className="text-base font-bold text-gray-900 pb-3 mb-4 border-b border-gray-100 flex items-center gap-2">
+                  <DollarSign size={16} className="text-[#7A0E2E]" />
+                  <span>Pricing, Rent & Financial Details</span>
                 </h3>
-                <table className="min-w-full table-auto text-left text-[16px] text-black ml-2">
-                  <tbody>
-                    {moreDetailsFields.map(([label, value], index) => (
-                      <tr key={index} className="align-top">
-                        <td className="py-1 pr-2 text-gray-500 sm:pr-6 md:pr-12 lg:pr-20 whitespace-nowrap">
-                          {label}:
-                        </td>
-                        <td className="py-1 pl-1 break-words">{value}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  {specsFinancials.map(([label, value], i) => (
+                    <div key={i} className="flex justify-between py-1.5 border-b border-gray-50 text-sm">
+                      <span className="text-gray-500">{label}</span>
+                      <span className="font-semibold text-gray-900 text-right">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Layout & Room Specifications */}
+            {specsLayout.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5">
+                <h3 className="text-base font-bold text-gray-900 pb-3 mb-4 border-b border-gray-100 flex items-center gap-2">
+                  <Building2 size={16} className="text-[#7A0E2E]" />
+                  <span>Room & Space Configuration</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  {specsLayout.map(([label, value], i) => (
+                    <div key={i} className="flex justify-between py-1.5 border-b border-gray-50 text-sm">
+                      <span className="text-gray-500">{label}</span>
+                      <span className="font-semibold text-gray-900 text-right">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Features, Utilities & Building */}
+            {specsFeatures.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5">
+                <h3 className="text-base font-bold text-gray-900 pb-3 mb-4 border-b border-gray-100 flex items-center gap-2">
+                  <Zap size={16} className="text-[#7A0E2E]" />
+                  <span>Features, Furnishing & Utilities</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  {specsFeatures.map(([label, value], i) => (
+                    <div key={i} className="flex justify-between py-1.5 border-b border-gray-50 text-sm">
+                      <span className="text-gray-500">{label}</span>
+                      <span className="font-semibold text-gray-900 text-right">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Parking Details */}
+            {specsParking.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5">
+                <h3 className="text-base font-bold text-gray-900 pb-3 mb-4 border-b border-gray-100 flex items-center gap-2">
+                  <Car size={16} className="text-[#7A0E2E]" />
+                  <span>Parking Details</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  {specsParking.map(([label, value], i) => (
+                    <div key={i} className="flex justify-between py-1.5 border-b border-gray-50 text-sm">
+                      <span className="text-gray-500">{label}</span>
+                      <span className="font-semibold text-gray-900 text-right">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Rental / PG / Co-living Section (if present) */}
+            {specsRental.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5">
+                <h3 className="text-base font-bold text-gray-900 pb-3 mb-4 border-b border-gray-100 flex items-center gap-2">
+                  <KeyRound size={16} className="text-[#7A0E2E]" />
+                  <span>Rental & PG Specifics</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  {specsRental.map(([label, value], i) => (
+                    <div key={i} className="flex justify-between py-1.5 border-b border-gray-50 text-sm">
+                      <span className="text-gray-500">{label}</span>
+                      <span className="font-semibold text-gray-900 text-right">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Status & Legal Details */}
+            {specsStatus.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5">
+                <h3 className="text-base font-bold text-gray-900 pb-3 mb-4 border-b border-gray-100 flex items-center gap-2">
+                  <ShieldCheck size={16} className="text-[#7A0E2E]" />
+                  <span>Possession & Listing Timeline</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  {specsStatus.map(([label, value], i) => (
+                    <div key={i} className="flex justify-between py-1.5 border-b border-gray-50 text-sm">
+                      <span className="text-gray-500">{label}</span>
+                      <span className="font-semibold text-gray-900 text-right">{value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             {/* Amenities Section */}
-            <div className="w-full p-3 mt-4 bg-white rounded-lg shadow-sm">
-              <h3 className="ml-4 font-semibold text-lm">Amenities</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 mt-4 ml-4 text-[18px]">
-                {visibleAmenities.map((amenity, index) => (
-                  <p key={index} className="flex items-center text-lg">
-                    {amenity.icon ? (
-                      <img
-                        src={`${process.env.REACT_APP_API_BASE_URL}/media/${amenity.icon}`}
-                        alt={amenity.name}
-                        className="w-10 h-10 mr-2"
-                      />
-                    ) : (
-                      <PiCricketThin className="mr-2 text-lg text-black" />
-                    )}
-                    {amenity.name}
-                  </p>
-                ))}
+            {allAmenities.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5">
+                <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
+                  <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <Sparkles size={16} className="text-[#7A0E2E]" />
+                    <span>Amenities & Facilities</span>
+                  </h3>
+                  <span className="text-xs text-gray-500">
+                    {allAmenities.length} Total
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {(showAllAmenities ? allAmenities : allAmenities.slice(0, 12)).map(
+                    (amenity, index) => (
+                      <div
+                        key={amenity._id || index}
+                        className="flex items-center gap-2.5 p-2.5 rounded-lg border border-gray-100 bg-gray-50/70 hover:bg-rose-50/40 hover:border-rose-100 transition-colors"
+                      >
+                        {amenity.icon ? (
+                          <img
+                            src={getFullMediaUrl(amenity.icon)}
+                            alt={amenity.name}
+                            className="w-6 h-6 object-contain shrink-0"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <PiCricketThin className="text-base text-[#7A0E2E] shrink-0" />
+                        )}
+                        <span className="text-xs font-medium text-gray-800 truncate">
+                          {amenity.name}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div>
+
+                {allAmenities.length > 12 && (
+                  <div className="mt-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllAmenities(!showAllAmenities)}
+                      className="text-xs font-semibold text-[#7A0E2E] hover:underline"
+                    >
+                      {showAllAmenities
+                        ? "Show Less"
+                        : `+${allAmenities.length - 12} More Amenities`}
+                    </button>
+                  </div>
+                )}
               </div>
-              {!showAll && allAmenities.length > 8 && (
-                <p
-                  className="mt-2 ml-4 font-bold text-purple-500 cursor-pointer "
-                  onClick={() => setShowAll(true)}
-                >
-                  +{allAmenities.length - 8} More
+            )}
+
+            {/* Property Description */}
+            {propertyDetails?.property_description && (
+              <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5">
+                <h3 className="text-base font-bold text-gray-900 pb-3 mb-3 border-b border-gray-100 flex items-center gap-2">
+                  <FileText size={16} className="text-[#7A0E2E]" />
+                  <span>About This Property</span>
+                </h3>
+                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                  {propertyDetails.property_description}
                 </p>
-              )}
-            </div>
-
-            {/* About Property Section */}
-            <div className="bg-white shadow-sm mt-4 rounded-2xl p-3 h-auto md:h-[250px] w-full">
-              <h2 className="justify-center ml-4 font-bold text-gray-700 text-ml">
-                About property
-              </h2>
-              <p className="mt-3 text-gray-700 justify-center ml-4 text-[18px]">
-                {aboutPropertyText}
-              </p>
-            </div>
-
-            {/* Location Section with Map */}
-            <div className="bg-white shadow-sm mt-4 rounded-2xl p-3 h-auto md:h-[600px] w-full">
-              <h2 className="ml-4 text-3xl font-bold text-gray-900">
-                Location
-              </h2>
-              <div className="mt-4 overflow-hidden rounded-lg">
-                <iframe
-                  className="w-full h-48 md:h-[450px] rounded-2xl"
-                  src={`https://maps.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`}
-                  allowFullScreen
-                  loading="lazy"
-                ></iframe>
               </div>
+            )}
+
+            {/* Location & Map */}
+            <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5">
+              <h3 className="text-base font-bold text-gray-900 pb-3 mb-3 border-b border-gray-100 flex items-center gap-2">
+                <MapPin size={16} className="text-[#7A0E2E]" />
+                <span>Location & Geo Coordinates</span>
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 text-sm">
+                <div>
+                  <span className="text-xs text-gray-400 block">Address</span>
+                  <p className="font-medium text-gray-800">
+                    {propertyDetails?.address || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-400 block">Area / Landmark</span>
+                  <p className="font-medium text-gray-800">
+                    {propertyDetails?.near_landmark || propertyDetails?.address_area || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-400 block">City, State</span>
+                  <p className="font-medium text-gray-800">
+                    {propertyDetails?.city_name || "N/A"}
+                    {propertyDetails?.state ? `, ${propertyDetails.state}` : ""}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-400 block">Zip Code & Country</span>
+                  <p className="font-medium text-gray-800">
+                    {propertyDetails?.zip_code || "N/A"}, {propertyDetails?.country || "India"}
+                  </p>
+                </div>
+              </div>
+
+              {propertyDetails?.latitude && propertyDetails?.longitude ? (
+                <div className="overflow-hidden rounded-lg border border-gray-200 h-64 sm:h-80">
+                  <iframe
+                    title="Property Map Location"
+                    className="w-full h-full border-0"
+                    src={`https://maps.google.com/maps?q=${propertyDetails.latitude},${propertyDetails.longitude}&z=15&output=embed`}
+                    allowFullScreen
+                    loading="lazy"
+                  ></iframe>
+                </div>
+              ) : (
+                <div className="p-6 bg-gray-50 rounded-lg text-center text-xs text-gray-500">
+                  Map coordinates not specified for this property.
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Modal for Viewing All Images */}
-        {showAllImages && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-            <div className="bg-white p-6 rounded-lg w-[80%] h-[80%] overflow-auto">
-              <button
-                className="absolute text-3xl text-white top-4 right-4"
-                onClick={() => setShowAllImages(false)}
-              >
-                ×
-              </button>
-              <h2 className="mb-4 text-2xl font-semibold">Gallery</h2>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
-                {propertyImages.map((img, index) => (
-                  <img
-                    key={index}
-                    src={img.image}
-                    alt={`Room ${index + 1}`}
-                    className="object-cover w-full h-48 rounded-lg"
-                  />
-                ))}
+        {/* Right Column: Sticky Lister & Admin Meta (1 Col) */}
+        <div className="space-y-6">
+          {/* Lister / Contact Information Card */}
+          <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-5 sticky top-20">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <User size={16} className="text-[#7A0E2E]" />
+                <span>Lister & Owner Information</span>
+              </h3>
+              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-[#7A0E2E] border border-rose-100">
+                {propertyDetails?.user_type || userDetails?.user_type || "Owner"}
+              </span>
+            </div>
 
-                {/* Property  Video at the end */}
-                {propertyDetails?.property_video && (
-                  <video
-                    controls
-                    className="rounded-2xl w-full h-48 md:h-[195px] object-cover"
-                  >
-                    <source
-                      src={propertyDetails.property_video}
-                      type="video/mp4"
-                    />
-                    Your browser does not support the video tag.
-                  </video>
-                )}
+            <div className="space-y-4">
+              {/* Primary User Contact */}
+              <div className="p-3.5 rounded-lg bg-gray-50 border border-gray-100 space-y-2">
+                <span className="text-xs font-semibold text-gray-500 block uppercase tracking-wider">
+                  Registered Account Details
+                </span>
+                <div>
+                  <span className="text-xs text-gray-400 block">Full Name</span>
+                  <p className="text-sm font-bold text-gray-900">
+                    {userDetails?.full_name || propertyDetails?.connect_to_name || "N/A"}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-xs text-gray-400 block">Mobile Phone</span>
+                  <div className="flex items-center justify-between">
+                    <a
+                      href={`tel:${userDetails?.mobile_number || propertyDetails?.connect_to_no}`}
+                      className="text-sm font-semibold text-[#7A0E2E] hover:underline"
+                    >
+                      {userDetails?.mobile_number || propertyDetails?.connect_to_no || "N/A"}
+                    </a>
+                    {(userDetails?.mobile_number || propertyDetails?.connect_to_no) && (
+                      <button
+                        onClick={() =>
+                          copyToClipboard(
+                            userDetails?.mobile_number || propertyDetails?.connect_to_no,
+                            "phone"
+                          )
+                        }
+                        className="text-gray-400 hover:text-gray-700 p-1"
+                        title="Copy Phone"
+                      >
+                        {copiedField === "phone" ? (
+                          <Check size={14} className="text-emerald-600" />
+                        ) : (
+                          <Copy size={14} />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-xs text-gray-400 block">Email Address</span>
+                  <div className="flex items-center justify-between">
+                    <a
+                      href={`mailto:${userDetails?.email || propertyDetails?.connect_to_email}`}
+                      className="text-xs font-medium text-gray-800 hover:text-[#7A0E2E] truncate max-w-[190px]"
+                    >
+                      {userDetails?.email || propertyDetails?.connect_to_email || "N/A"}
+                    </a>
+                    {(userDetails?.email || propertyDetails?.connect_to_email) && (
+                      <button
+                        onClick={() =>
+                          copyToClipboard(
+                            userDetails?.email || propertyDetails?.connect_to_email,
+                            "email"
+                          )
+                        }
+                        className="text-gray-400 hover:text-gray-700 p-1"
+                        title="Copy Email"
+                      >
+                        {copiedField === "email" ? (
+                          <Check size={14} className="text-emerald-600" />
+                        ) : (
+                          <Copy size={14} />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Point of Contact (Connect To) */}
+              {(propertyDetails?.connect_to_name || propertyDetails?.connect_to_no) && (
+                <div className="p-3.5 rounded-lg bg-gray-50 border border-gray-100 space-y-1.5">
+                  <span className="text-xs font-semibold text-gray-500 block uppercase tracking-wider">
+                    Direct Point of Contact
+                  </span>
+                  <div className="text-sm">
+                    <span className="text-gray-500 text-xs">Name: </span>
+                    <span className="font-semibold text-gray-900">
+                      {propertyDetails.connect_to_name || "N/A"}
+                    </span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-gray-500 text-xs">Contact: </span>
+                    <a
+                      href={`tel:${propertyDetails.connect_to_no}`}
+                      className="font-semibold text-[#7A0E2E] hover:underline"
+                    >
+                      {propertyDetails.connect_to_no || "N/A"}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* Administrative Identifiers */}
+              <div className="p-3.5 rounded-lg bg-gray-50 border border-gray-100 space-y-2 text-xs">
+                <span className="font-semibold text-gray-500 block uppercase tracking-wider">
+                  Admin References
+                </span>
+                <div className="flex justify-between py-1 border-b border-gray-200/50">
+                  <span className="text-gray-500">Property ID</span>
+                  <span className="font-mono font-semibold text-gray-900">
+                    {propertyDetails?._id || id}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-gray-200/50">
+                  <span className="text-gray-500">User ID</span>
+                  <span className="font-mono text-gray-700">
+                    {propertyDetails?.user_id || "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-gray-200/50">
+                  <span className="text-gray-500">RERA ID</span>
+                  <span className="font-medium text-gray-900">
+                    {propertyDetails?.property_no || "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-gray-500">Posted By Admin</span>
+                  <span className="font-medium text-gray-900">
+                    {propertyDetails?.posted_by_admin || "No"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Direct Links */}
+              <div className="pt-2">
+                <Link
+                  to="/properties"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-semibold shadow-xs transition-colors"
+                >
+                  <ArrowLeft size={14} />
+                  Return to Properties Inventory
+                </Link>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Lightbox Modal for All Media */}
+      {showGalleryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+          <div className="relative w-full max-w-5xl bg-neutral-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800 text-white">
+              <div className="flex items-center gap-3">
+                <h3 className="font-bold text-base">
+                  {propertyDetails?.property_name || "Gallery"}
+                </h3>
+                <span className="text-xs text-neutral-400">
+                  ({mediaList.length} total)
+                </span>
+              </div>
+              <button
+                onClick={() => setShowGalleryModal(false)}
+                className="p-1.5 rounded-full hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body: Active View */}
+            <div className="relative flex-1 bg-black flex items-center justify-center min-h-[350px] p-2">
+              {activeMedia?.type === "video" ? (
+                <video
+                  controls
+                  autoPlay
+                  className="max-h-[60vh] max-w-full rounded"
+                  src={activeMedia.url}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <img
+                  src={activeMedia?.url}
+                  alt="Gallery Active"
+                  className="max-h-[60vh] max-w-full object-contain rounded"
+                />
+              )}
+
+              {mediaList.length > 1 && (
+                <>
+                  <button
+                    onClick={() =>
+                      setActiveMediaIndex((prev) =>
+                        prev === 0 ? mediaList.length - 1 : prev - 1
+                      )
+                    }
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 text-white hover:bg-black transition-colors"
+                  >
+                    <ChevronLeft size={22} />
+                  </button>
+                  <button
+                    onClick={() =>
+                      setActiveMediaIndex((prev) =>
+                        prev === mediaList.length - 1 ? 0 : prev + 1
+                      )
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 text-white hover:bg-black transition-colors"
+                  >
+                    <ChevronRight size={22} />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Modal Thumbnail Footer */}
+            <div className="flex gap-2 p-4 bg-neutral-900 border-t border-neutral-800 overflow-x-auto">
+              {mediaList.map((m, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveMediaIndex(idx)}
+                  className={`w-16 h-12 rounded overflow-hidden shrink-0 border-2 transition-all ${
+                    activeMediaIndex === idx
+                      ? "border-[#7A0E2E] scale-105"
+                      : "border-transparent opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  {m.type === "video" ? (
+                    <div className="w-full h-full bg-neutral-800 flex items-center justify-center text-white">
+                      <Video size={14} />
+                    </div>
+                  ) : (
+                    <img
+                      src={m.url}
+                      alt={`thumb-${idx}`}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
