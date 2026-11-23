@@ -4,9 +4,10 @@ import { useNavigate, useParams, useLocation, Link } from "react-router-dom";
 import axios from "axios";
 import { UserPlus, ArrowLeft, Save, MapPin, Shield, Mail, Phone, Lock, User } from "lucide-react";
 import { MyContext } from "../../App";
+import { normalizeRole, normalizeStaff } from "../../permissions/permissionConfig";
 
 const AddAdminStaff = () => {
-  const { roles, adminStaff, setAdminStaff } = useContext(MyContext);
+  const { roles, setRoles, adminStaff, setAdminStaff } = useContext(MyContext);
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith("/admin");
@@ -29,6 +30,51 @@ const AddAdminStaff = () => {
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Load roles from backend if not yet loaded
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      axios
+        .get(`${EP.ROLES_LIST}`, {
+          headers: { Authorization: `Token ${token}` },
+        })
+        .then((res) => {
+          if (Array.isArray(res.data) && setRoles) {
+            setRoles(res.data.map(normalizeRole));
+          }
+        })
+        .catch((err) => console.error("Failed to fetch roles in AddAdminStaff:", err));
+    }
+  }, [setRoles]);
+
+  // Load staff list if editing and not in state
+  useEffect(() => {
+    if (staffId && !editing) {
+      const token = sessionStorage.getItem("token");
+      if (token) {
+        axios
+          .get(`${EP.ADMIN_STAFF_LIST}`, {
+            headers: { Authorization: `Token ${token}` },
+          })
+          .then((res) => {
+            if (Array.isArray(res.data) && setAdminStaff) {
+              const normalizedList = res.data.map(normalizeStaff);
+              setAdminStaff(normalizedList);
+              const found = normalizedList.find((s) => s.staffId === staffId);
+              if (found) {
+                setName(found.name || "");
+                setEmail(found.email || "");
+                setPhone(found.phone || "");
+                setRoleId(found.roleId || "");
+                setSelectedCities(found.allowedCities || []);
+              }
+            }
+          })
+          .catch((err) => console.error("Failed to fetch staff in AddAdminStaff:", err));
+      }
+    }
+  }, [staffId, editing, setAdminStaff]);
 
   useEffect(() => {
     if (editing) {
@@ -98,15 +144,20 @@ const AddAdminStaff = () => {
       const token = sessionStorage.getItem("token");
 
       if (editing) {
+        const payload = {
+          name,
+          email,
+          phone,
+          role_id: roleId,
+          allowed_cities: selectedCities,
+        };
+        if (password.trim()) {
+          payload.password = password.trim();
+        }
+
         await axios.put(
           `${EP.ADMIN_STAFF_UPDATE}${staffId}`,
-          {
-            name,
-            email,
-            phone,
-            role_id: roleId,
-            allowed_cities: selectedCities,
-          },
+          payload,
           { headers: { Authorization: `Token ${token}` } }
         );
       } else {
@@ -284,22 +335,31 @@ const AddAdminStaff = () => {
               </select>
             </div>
 
-            {!editing && (
-              <div className="col-12 col-md-6">
-                <label className="form-label small fw-bold text-dark mb-1">
-                  <Lock size={13} className="me-1 text-muted" /> Initial Password <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Set initial login password"
-                  className="form-control rounded-3 shadow-none"
-                  style={{ borderColor: "#CBD5E1", fontSize: "14px" }}
-                  required
-                />
-              </div>
-            )}
+            <div className="col-12 col-md-6">
+              <label className="form-label small fw-bold text-dark mb-1">
+                <Lock size={13} className="me-1 text-muted" />{" "}
+                {editing ? "Reset Password" : "Initial Password"}{" "}
+                {!editing && <span className="text-danger">*</span>}
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={
+                  editing
+                    ? "Leave blank to keep current password"
+                    : "Set initial login password"
+                }
+                className="form-control rounded-3 shadow-none"
+                style={{ borderColor: "#CBD5E1", fontSize: "14px" }}
+                required={!editing}
+              />
+              {editing && (
+                <div className="text-muted small mt-1" style={{ fontSize: "11px" }}>
+                  Only enter a new password if you want to change it.
+                </div>
+              )}
+            </div>
           </div>
 
           {/* City Scope Section */}

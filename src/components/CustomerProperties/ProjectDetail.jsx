@@ -1057,8 +1057,6 @@ const ProjectDetail = () => {
                           </span>
                         </div>
                       ))}
-                        </div>
-                      ))}
                     </div>
                   );
                 })}

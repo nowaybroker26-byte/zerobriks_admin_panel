@@ -1,0 +1,339 @@
+.zb-login-wrapper {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #242631;
+  background: #faf8f7;
+  height: 100vh;
+  max-height: 100vh;
+  width: 100vw;
+  max-width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 100;
+}
+
+.zb-login-wrapper * {
+  box-sizing: border-box;
+}
+
+.zb-login-wrapper .corner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 180px;
+  height: 90px;
+  background: #780b26;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  border-top: 5px solid #a68035;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.zb-login-wrapper .city {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 48%;
+  height: 20vh;
+  max-height: 170px;
+  object-fit: cover;
+  object-position: bottom;
+  opacity: 0.8;
+  pointer-events: none;
+  mask-image: linear-gradient(transparent, black 35%);
+  -webkit-mask-image: linear-gradient(transparent, black 35%);
+  z-index: 1;
+}
+
+.zb-login-wrapper main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 48px;
+  max-width: 1140px;
+  width: 100%;
+  margin: auto;
+  padding: 10px 40px;
+  position: relative;
+  z-index: 3;
+}
+
+.zb-login-wrapper .brand {
+  width: 290px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.zb-login-wrapper .intro h1 {
+  font-size: 32px;
+  color: #780b26;
+  margin: 22px 0 6px;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.zb-login-wrapper .intro p {
+  font-size: 16px;
+  color: #565965;
+  max-width: 400px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.zb-login-wrapper .features {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.zb-login-wrapper .feature {
+  background: #f4edef;
+  border-radius: 9px;
+  padding: 12px 6px;
+  text-align: center;
+  font-size: 12px;
+  color: #242631;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
+}
+
+.zb-login-wrapper .feature:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(120, 11, 38, 0.08);
+}
+
+.zb-login-wrapper .feature svg {
+  width: 24px;
+  height: 24px;
+  stroke: #780b26;
+  fill: none;
+  stroke-width: 1.7;
+  display: block;
+  margin: 0 auto 6px;
+}
+
+.zb-login-wrapper .card {
+  background: white;
+  padding: 26px 30px;
+  border: 1px solid #e9e3e3;
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(52, 32, 43, 0.08);
+  max-width: 410px;
+  width: 100%;
+  justify-self: center;
+}
+
+.zb-login-wrapper .card .brand {
+  width: 160px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 14px;
+  object-fit: contain;
+}
+
+.zb-login-wrapper .card h2 {
+  font-size: 22px;
+  color: #780b26;
+  text-align: center;
+  margin: 0;
+  font-weight: bold;
+}
+
+.zb-login-wrapper .sub {
+  text-align: center;
+  color: #666b75;
+  font-size: 13px;
+  margin: 4px 0 18px;
+}
+
+.zb-login-wrapper label {
+  display: block;
+  font-weight: 600;
+  font-size: 12.5px;
+  margin: 10px 0 4px;
+  color: #242631;
+}
+
+.zb-login-wrapper input:not([type="checkbox"]) {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #d8d5d9;
+  border-radius: 7px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 13.5px;
+  background: white;
+  color: #242631;
+  transition: border-color 0.2s ease, outline 0.2s ease;
+}
+
+.zb-login-wrapper input:focus {
+  outline: 2px solid #a68035;
+  outline-offset: 1px;
+  border-color: #a68035;
+}
+
+.zb-login-wrapper .password {
+  position: relative;
+}
+
+.zb-login-wrapper .password input {
+  padding-right: 60px;
+}
+
+.zb-login-wrapper .toggle {
+  position: absolute;
+  right: 8px;
+  top: 7px;
+  border: 0;
+  background: none;
+  color: #780b26;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12.5px;
+  padding: 2px 6px;
+}
+
+.zb-login-wrapper .options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 12px;
+}
+
+.zb-login-wrapper .options label {
+  margin: 0;
+  font-weight: 400;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.zb-login-wrapper input[type="checkbox"] {
+  accent-color: #780b26;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.zb-login-wrapper button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.zb-login-wrapper .link {
+  border: 0;
+  background: none;
+  color: #780b26;
+  padding: 0;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.zb-login-wrapper .submit {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: #780b26;
+  color: white;
+  height: 42px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.2s ease;
+  margin-top: 2px;
+}
+
+.zb-login-wrapper .submit:hover {
+  background: #60091e;
+}
+
+.zb-login-wrapper .submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.zb-login-wrapper .foot {
+  text-align: center;
+  color: #777;
+  font-size: 11.5px;
+  margin-top: 14px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.zb-login-wrapper .message {
+  font-size: 12px;
+  color: #780b26;
+  margin: 8px 0 0;
+  min-height: 16px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.zb-login-wrapper footer {
+  position: relative;
+  text-align: center;
+  color: #79737a;
+  font-size: 12px;
+  padding: 6px 12px;
+  z-index: 3;
+  flex-shrink: 0;
+}
+
+@media (max-width: 800px) {
+  .zb-login-wrapper {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+  .zb-login-wrapper main {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 30px 20px;
+    height: auto;
+  }
+  .zb-login-wrapper .intro {
+    text-align: center;
+  }
+  .zb-login-wrapper .brand {
+    margin: 0 auto;
+  }
+  .zb-login-wrapper .intro h1 {
+    font-size: 25px;
+    margin-top: 15px;
+  }
+  .zb-login-wrapper .intro p {
+    margin: auto;
+    font-size: 15px;
+  }
+  .zb-login-wrapper .features,
+  .zb-login-wrapper .city,
+  .zb-login-wrapper .corner {
+    display: none;
+  }
+  .zb-login-wrapper .card {
+    padding: 24px;
+  }
+  .zb-login-wrapper .card .brand {
+    display: none;
+  }
+}

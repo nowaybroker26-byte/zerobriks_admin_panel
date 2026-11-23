@@ -135,6 +135,7 @@ const SIDEBAR_SECTIONS = [
         name: "Advertising",
         icon: Megaphone,
         href: "/hero-sliders",
+        moduleKey: "offers",
       },
       {
         name: "Offers & Coupons",
@@ -305,10 +306,9 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             {SIDEBAR_SECTIONS.map((group, gIdx) => {
               const visibleItems = group.items.filter((item) =>
                 item.superAdminOnly
-                  ? currentRole?.isSuperAdmin
-                  : currentRole?.isSuperAdmin ||
-                    !item.moduleKey ||
-                    can(item.moduleKey, "view")
+                  ? Boolean(currentRole?.isSuperAdmin)
+                  : Boolean(currentRole?.isSuperAdmin) ||
+                    Boolean(item.moduleKey && can(item.moduleKey, "view"))
               );
 
               if (visibleItems.length === 0) return null;
@@ -919,13 +919,7 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
                 </div>
               )}
             </div>
-        ) : (
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 cursor-pointer hover:border-gray-300">
-            <MapPin size={14} className="text-[#7A0E2E]" />
-            <span>All Cities</span>
-            <ChevronDown size={13} className="text-gray-400" />
-          </div>
-        )}
+        ) : null}
 
         {/* Notification Bell */}
         <Link
@@ -940,21 +934,39 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
 
         {/* Admin User Pill */}
         <div className="relative">
-          <button
-            onClick={toggleUserMenu}
-            className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 bg-white border border-gray-200 rounded-full hover:border-gray-300 transition-all"
-          >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#7A0E2E] to-[#D4AF37] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-              A
-            </div>
-            <div className="hidden sm:block text-left leading-tight">
-              <div className="text-xs font-bold text-gray-900">Admin</div>
-              <div className="text-[10px] text-gray-500 font-medium">
-                {currentRole?.roleName || "No role"}
-              </div>
-            </div>
-            <ChevronDown size={13} className="text-gray-400 hidden sm:block" />
-          </button>
+          {(() => {
+            let storedUser = null;
+            try {
+              const raw = sessionStorage.getItem("user");
+              storedUser = raw ? JSON.parse(raw) : null;
+            } catch (_) {}
+            const userDisplayName =
+              storedUser?.name ||
+              storedUser?.first_name ||
+              storedUser?.username ||
+              (currentRole?.isSuperAdmin ? "Super Admin" : "Staff");
+            const userInitial = (userDisplayName || "A").charAt(0).toUpperCase();
+
+            return (
+              <button
+                onClick={toggleUserMenu}
+                className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 bg-white border border-gray-200 rounded-full hover:border-gray-300 transition-all"
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#7A0E2E] to-[#D4AF37] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                  {userInitial}
+                </div>
+                <div className="hidden sm:block text-left leading-tight">
+                  <div className="text-xs font-bold text-gray-900 truncate max-w-[110px]">
+                    {userDisplayName}
+                  </div>
+                  <div className="text-[10px] text-gray-500 font-medium">
+                    {currentRole?.roleName || "No role"}
+                  </div>
+                </div>
+                <ChevronDown size={13} className="text-gray-400 hidden sm:block" />
+              </button>
+            );
+          })()}
 
           {/* Dropdown Menu */}
           {isUserMenuOpen && (

@@ -7,12 +7,13 @@ import { MyContext } from "../../App";
 import {
   MODULE_SCHEMA,
   buildEmptyPermissions,
+  normalizeRole,
 } from "../../permissions/permissionConfig";
 
 const ACTIONS = ["view", "add", "edit", "delete", "approve"];
 
 const AddEditRole = () => {
-  const { roles } = useContext(MyContext);
+  const { roles, setRoles } = useContext(MyContext);
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith("/admin");
@@ -20,7 +21,7 @@ const AddEditRole = () => {
   const backPath = `${prefix}/roles-permissions`;
 
   const { roleId } = useParams();
-  const editingRole = roleId ? roles.find((r) => r.roleId === roleId) : null;
+  const editingRole = roleId ? (roles || []).find((r) => r.roleId === roleId) : null;
 
   const [roleName, setRoleName] = useState(editingRole?.roleName || "");
   const [description, setDescription] = useState(
@@ -32,11 +33,37 @@ const AddEditRole = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // Fetch roles if editing on page reload
+  useEffect(() => {
+    if (roleId && !editingRole) {
+      const token = sessionStorage.getItem("token");
+      if (token) {
+        axios
+          .get(`${EP.ROLES_LIST}`, {
+            headers: { Authorization: `Token ${token}` },
+          })
+          .then((res) => {
+            if (Array.isArray(res.data) && setRoles) {
+              const list = res.data.map(normalizeRole);
+              setRoles(list);
+              const found = list.find((r) => r.roleId === roleId);
+              if (found) {
+                setRoleName(found.roleName || "");
+                setDescription(found.description || "");
+                setPermissions(found.permissions || buildEmptyPermissions());
+              }
+            }
+          })
+          .catch((err) => console.error("Failed to fetch roles in AddEditRole:", err));
+      }
+    }
+  }, [roleId, editingRole, setRoles]);
+
   useEffect(() => {
     if (editingRole) {
-      setRoleName(editingRole.roleName);
+      setRoleName(editingRole.roleName || "");
       setDescription(editingRole.description || "");
-      setPermissions(editingRole.permissions);
+      setPermissions(editingRole.permissions || buildEmptyPermissions());
     }
   }, [editingRole]);
 

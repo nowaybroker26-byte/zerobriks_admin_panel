@@ -217,21 +217,40 @@ export function clearAllowedCitiesFromSession() {
 
 export function normalizeRole(apiRole) {
   if (!apiRole) return null;
+  let perms = apiRole.permissions;
+  if (typeof perms === "string") {
+    try {
+      perms = JSON.parse(perms);
+      if (typeof perms === "string") {
+        perms = JSON.parse(perms);
+      }
+    } catch (e) {
+      perms = {};
+    }
+  }
+
   return {
-    roleId: apiRole.id,
-    roleName: apiRole.role_name,
-    description: apiRole.description,
-    isSuperAdmin: apiRole.is_super_admin,
-    permissions: apiRole.permissions,
+    roleId: apiRole.id || apiRole._id || apiRole.roleId,
+    roleName: apiRole.role_name || apiRole.roleName || "Custom Role",
+    description: apiRole.description || "",
+    isSuperAdmin: Boolean(apiRole.is_super_admin ?? apiRole.isSuperAdmin),
+    permissions: perms && typeof perms === "object" ? perms : {},
   };
 }
 
 export function normalizeStaff(apiStaff) {
+  if (!apiStaff) return null;
   return {
-    staffId: apiStaff.id,
-    name: apiStaff.name,
-    email: apiStaff.email,
-    roleId: apiStaff.role_id,
-    roleName: apiStaff.role_name,
+    staffId: apiStaff.id || apiStaff._id || apiStaff.staffId,
+    name: apiStaff.name || "",
+    email: apiStaff.email || "",
+    phone: apiStaff.phone || "",
+    roleId: apiStaff.role_id || apiStaff.roleId,
+    roleName: apiStaff.role_name || apiStaff.roleName || "Unassigned",
+    allowedCities: Array.isArray(apiStaff.allowed_cities)
+      ? apiStaff.allowed_cities
+      : Array.isArray(apiStaff.allowedCities)
+      ? apiStaff.allowedCities
+      : [],
   };
 }

@@ -1015,7 +1015,7 @@ const InquiriesList = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search name, phone, email, message..."
+                  placeholder="Search inquiries (Name, Phone, Email)..."
                   className="w-full pl-8 pr-7 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#7A0E2E]"
                   style={{ height: "36px" }}
                 />
@@ -1040,7 +1040,7 @@ const InquiriesList = () => {
                 className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 font-medium focus:outline-none focus:border-[#7A0E2E] cursor-pointer"
                 style={{ height: "36px" }}
               >
-                <option value="All">All User Types</option>
+                <option value="All">User Type</option>
                 <option value="Buyer / Tenant">Buyer / Tenant</option>
                 <option value="Property Owner">Property Owner</option>
                 <option value="Builder / Developer">Builder / Developer</option>
@@ -1055,7 +1055,7 @@ const InquiriesList = () => {
                 className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 font-medium focus:outline-none focus:border-[#7A0E2E] cursor-pointer"
                 style={{ height: "36px" }}
               >
-                <option value="All">All Cities</option>
+                <option value="All">City</option>
                 {availableCities.map((city) => (
                   <option key={city} value={city}>
                     {city}
@@ -1071,9 +1071,9 @@ const InquiriesList = () => {
                 onChange={(e) => setSelectedProperty(e.target.value)}
                 className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 font-medium focus:outline-none focus:border-[#7A0E2E] cursor-pointer truncate"
                 style={{ height: "36px" }}
-                title={selectedProperty}
+                title={selectedProperty === "All" ? "Property Name" : selectedProperty}
               >
-                <option value="All">All Active Properties</option>
+                <option value="All">Property Name</option>
                 {allPropertyOptions.map((prop) => (
                   <option key={prop} value={prop} title={prop}>
                     {prop}
@@ -1089,9 +1089,9 @@ const InquiriesList = () => {
                 onChange={(e) => setSelectedProject(e.target.value)}
                 className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 font-medium focus:outline-none focus:border-[#7A0E2E] cursor-pointer truncate"
                 style={{ height: "36px" }}
-                title={selectedProject}
+                title={selectedProject === "All" ? "Project Name" : selectedProject}
               >
-                <option value="All">All Active Projects</option>
+                <option value="All">Project Name</option>
                 {allProjectOptions.map((prj) => (
                   <option key={prj} value={prj} title={prj}>
                     {prj}
@@ -1119,7 +1119,7 @@ const InquiriesList = () => {
                 className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 font-medium focus:outline-none focus:border-[#7A0E2E] cursor-pointer"
                 style={{ height: "36px" }}
               >
-                <option value="All">All Dates</option>
+                <option value="All">Inquiry Date</option>
                 <option value="today">Today</option>
                 <option value="last_7_days">Last 7 Days</option>
                 <option value="last_30_days">Last 30 Days</option>

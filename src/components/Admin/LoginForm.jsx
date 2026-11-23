@@ -2,36 +2,33 @@ import { EP } from '../../Api/endpoints';
 import React, { useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { User, Lock, Eye, EyeOff, ShieldCheck, ArrowRight, Zap, Sparkles } from "lucide-react";
-import zerobriksLogo from "../../assets/zerobriks_logo.png";
+import "./ZeroBriksLogin.css";
+import cityBg from "../../assets/images/city_bg.jpeg";
+import brandLogo from "../../assets/images/brand_logo.png";
+import cardBrandLogo from "../../assets/images/card_brand_logo.png";
 import { MyContext } from "../../App";
 import {
   DEFAULT_ROLES,
   saveRoleToSession,
   normalizeRole,
   saveAllowedCitiesToSession,
+  firstAccessibleModule,
+  MODULE_ROUTES,
 } from "../../permissions/permissionConfig";
-
-const BRAND = {
-  royalMaroon: "#7A0E2E",
-  darkRed: "#52091D",
-  royalGold: "#D4AF37",
-  charcoal: "#1F1F1F",
-};
 
 const LoginForm = () => {
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("admin123");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const { setIsAuthenticated, setCurrentRole } = useContext(MyContext);
 
   const handleLogin = async (userVal, passVal) => {
-    setError("");
+    setMessage("");
     setIsLoading(true);
 
     try {
@@ -41,30 +38,44 @@ const LoginForm = () => {
       );
 
       sessionStorage.setItem("token", response.data.token);
+      localStorage.setItem("token", response.data.token);
 
-      if (response.data.role) {
-        const normalized = normalizeRole(response.data.role);
-        saveRoleToSession(normalized);
-        setCurrentRole(normalized);
-      } else {
-        const superAdminRole = DEFAULT_ROLES.find((r) => r.isSuperAdmin);
-        saveRoleToSession(superAdminRole);
-        setCurrentRole(superAdminRole);
+      if (response.data.user) {
+        sessionStorage.setItem("user", JSON.stringify(response.data.user));
       }
 
+      let activeRole = null;
+      if (response.data.role) {
+        activeRole = normalizeRole(response.data.role);
+      } else {
+        activeRole = DEFAULT_ROLES.find((r) => r.isSuperAdmin);
+      }
+
+      saveRoleToSession(activeRole);
+      setCurrentRole(activeRole);
       saveAllowedCitiesToSession(response.data.allowed_cities);
       setIsAuthenticated(true);
 
+      const targetPath =
+        activeRole?.isSuperAdmin || activeRole?.permissions?.admin?.view
+          ? "/admin"
+          : (() => {
+              const firstMod = firstAccessibleModule(activeRole);
+              return firstMod && MODULE_ROUTES[firstMod]
+                ? MODULE_ROUTES[firstMod]
+                : "/admin";
+            })();
+
       setTimeout(() => {
-        navigate("/admin");
+        navigate(targetPath);
       }, 100);
     } catch (err) {
       if (err.response) {
-        setError(err.response.data?.detail || "Invalid username or password. Please try again.");
+        setMessage(err.response.data?.detail || err.response.data?.error || "Invalid username or password. Please try again.");
       } else if (err.request) {
-        setError("Unable to connect to backend server. Please try again.");
+        setMessage("Unable to connect to backend server. Please try again.");
       } else {
-        setError("Login failed. Please check your credentials.");
+        setMessage("Login failed. Please check your credentials.");
       }
     } finally {
       setIsLoading(false);
@@ -73,7 +84,7 @@ const LoginForm = () => {
 
   const handleInstantAccess = async () => {
     setIsLoading(true);
-    setError("");
+    setMessage("");
     try {
       try {
         const response = await axios.post(
@@ -100,7 +111,7 @@ const LoginForm = () => {
         navigate("/admin");
       }, 50);
     } catch (err) {
-      setError("Instant access failed: " + (err.message || "Unknown error"));
+      setMessage("Instant access failed: " + (err.message || "Unknown error"));
     } finally {
       setIsLoading(false);
     }
@@ -109,159 +120,131 @@ const LoginForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
-      setError("Please enter both username and password.");
+      setMessage("Please enter both username and password.");
       return;
     }
     handleLogin(username, password);
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden bg-gradient-to-br from-[#2D0510] via-[#1F1F1F] to-[#140307]">
-      {/* Background Decorative Elements */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#7A0E2E]/25 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-[#D4AF37]/15 blur-3xl pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:28px_28px] opacity-5 pointer-events-none" />
+    <div className="zb-login-wrapper">
+      <div className="corner"></div>
+      <img className="city" alt="" src={cityBg} />
+      
+      <main>
+        <section className="intro">
+          <img className="brand" src={brandLogo} alt="ZeroBriks" />
+          <h1>Admin Portal</h1>
+          <p>Manage, monitor and grow your real estate operations.</p>
+          
+          <div className="features">
+            <div className="feature">
+              <svg viewBox="0 0 24 24">
+                <path d="M3 20h18M5 17V11h4v6m3 0V6h4v11m3 0V3h3v14" />
+              </svg>
+              Analytics
+            </div>
+            <div className="feature">
+              <svg viewBox="0 0 24 24">
+                <circle cx="9" cy="7" r="3" />
+                <path d="M2 21v-3a7 7 0 0 1 14 0v3M16 4a3 3 0 0 1 0 6m3 3a5 5 0 0 1 3 5v3" />
+              </svg>
+              User Management
+            </div>
+            <div className="feature">
+              <svg viewBox="0 0 24 24">
+                <path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zm5 3h4" />
+              </svg>
+              Notifications
+            </div>
+            <div className="feature">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="8" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 1v3m0 16v3M1 12h3m16 0h3" />
+              </svg>
+              Operations
+            </div>
+          </div>
+        </section>
 
-      {/* Main Luxury Login Card */}
-      <div className="relative w-full max-w-md bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 sm:p-10 border border-white/40 z-10 transition-all duration-300">
-        {/* Brand Logo & Header */}
-        <div className="text-center mb-8">
-          <div className="inline-block p-3 rounded-2xl bg-white shadow-sm border border-gray-100 mb-3">
-            <img
-              src={zerobriksLogo}
-              alt="Zerobriks"
-              className="h-12 max-w-[200px] object-contain mx-auto"
+        <section className="card">
+          <img 
+            className="brand" 
+            src={cardBrandLogo} 
+            alt="ZeroBriks" 
+            onDoubleClick={handleInstantAccess}
+            style={{ cursor: "pointer" }}
+            title="Double click for instant Super Admin login"
+          />
+          <h2>Admin Portal Login</h2>
+          <p className="sub">Sign in to manage analytics, listings and operations.</p>
+          
+          <form id="login" onSubmit={handleSubmit}>
+            <label htmlFor="user">Username or Email</label>
+            <input 
+              id="user" 
+              autoComplete="username" 
+              placeholder="Enter your email or username" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required 
             />
-          </div>
-          <h2 className="text-2xl font-extrabold text-[#1F1F1F] tracking-tight">
-            Admin Portal
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            Sign in to manage analytics, listings, and operations
-          </p>
-        </div>
-
-        {/* Error Alert */}
-        {error && (
-          <div className="mb-6 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2 animate-in fade-in">
-            <span className="font-bold text-sm leading-none">•</span>
-            <div className="flex-1">{error}</div>
-          </div>
-        )}
-
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Username Field */}
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5" htmlFor="username">
-              Username or Email
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                <User size={18} />
-              </div>
-              <input
-                id="username"
-                type="text"
-                placeholder="admin"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0E2E]/25 focus:border-[#7A0E2E] transition-all text-gray-800 placeholder-gray-400"
-              />
-            </div>
-          </div>
-
-          {/* Password Field */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider" htmlFor="password">
-                Password
-              </label>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                <Lock size={18} />
-              </div>
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
+            
+            <label htmlFor="pass">Password</label>
+            <div className="password">
+              <input 
+                id="pass" 
+                type={showPassword ? "text" : "password"} 
+                autoComplete="current-password" 
+                placeholder="Enter your password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full pl-10 pr-11 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7A0E2E]/25 focus:border-[#7A0E2E] transition-all text-gray-800 placeholder-gray-400"
+                required 
               />
-              <button
-                type="button"
+              <button 
+                type="button" 
+                className="toggle" 
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
-          </div>
-
-          {/* Remember Me */}
-          <div className="flex items-center justify-between text-xs pt-1">
-            <label className="flex items-center gap-2 cursor-pointer text-gray-600 select-none">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-gray-300 text-[#7A0E2E] focus:ring-[#7A0E2E]"
-              />
-              <span>Remember this session</span>
-            </label>
-            <span className="text-gray-400">Secure 256-bit SSL</span>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            style={{
-              background: `linear-gradient(135deg, ${BRAND.royalMaroon} 0%, ${BRAND.darkRed} 100%)`,
-            }}
-            className="w-full py-3 px-4 text-sm font-bold text-white rounded-xl shadow-md hover:shadow-lg hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Signing in...
-              </span>
-            ) : (
-              <>
-                <span>Sign In to Dashboard</span>
-                <ArrowRight size={16} />
-              </>
+            
+            <div className="options">
+              <label>
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                /> 
+                Remember this session
+              </label>
+            </div>
+            
+            <button className="submit" disabled={isLoading}>
+              {isLoading ? "Signing in..." : "Sign In to Dashboard →"}
+            </button>
+            
+            {message && (
+              <p className="message" role="status">
+                {message}
+              </p>
             )}
-          </button>
-        </form>
-
-        {/* Instant 1-Click Direct Access Feature */}
-        <div className="mt-6 pt-5 border-t border-gray-100 text-center">
-          <button
-            type="button"
+          </form>
+          
+          <div 
+            className="foot" 
             onClick={handleInstantAccess}
-            disabled={isLoading}
-            className="w-full py-2.5 px-4 text-xs font-bold text-amber-900 bg-gradient-to-r from-amber-50 via-amber-100/90 to-amber-200/80 hover:from-amber-100 hover:to-amber-300/80 rounded-xl border border-amber-300 shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+            style={{ cursor: "pointer" }}
+            title="Instant Super Admin Login"
           >
-            <Zap size={15} className="text-amber-600 fill-amber-500" />
-            <span>⚡ 1-Click Instant Access (Super Admin)</span>
-          </button>
-          <div className="flex items-center justify-center gap-3 mt-2 text-[11px] text-gray-500">
-            <span>User: <strong className="text-gray-700">admin</strong></span>
-            <span>•</span>
-            <span>Pass: <strong className="text-gray-700">admin123</strong></span>
+            Authorized personnel only · Secure access
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-6 text-center text-3xs text-gray-400">
-          ZEROBRIKS Real Estate Technologies • All Rights Reserved
-        </div>
-      </div>
+        </section>
+      </main>
+      
+      <footer>© 2026 ZeroBriks · A brand of NowayBroker</footer>
     </div>
   );
 };
