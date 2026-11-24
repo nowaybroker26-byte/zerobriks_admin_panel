@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@material-ui/core";
+import { Button } from "@mui/material";
 
 const Card = (props) => {
     const address = `${props.address}, ${props.city}, ${props.state}, ${props.country}`;
